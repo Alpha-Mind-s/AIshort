@@ -1,7 +1,20 @@
 import { http, HttpResponse } from "msw";
-import { mockDramas, mockEpisodes, mockVideoAssets } from "../data/dramas";
+import {
+  mockDramas,
+  mockEpisodes,
+  mockVideoAssets,
+  createDrama,
+  updateDrama,
+  deleteDrama,
+  addEpisode,
+  updateEpisode,
+  deleteEpisode,
+  type MockDrama,
+} from "../data/dramas";
 
 export const dramaHandlers = [
+  // ==================== READ ====================
+
   // GET /dramas
   http.get("*/api/v1/dramas", ({ request }) => {
     const url = new URL(request.url);
@@ -81,5 +94,78 @@ export const dramaHandlers = [
         })),
       },
     });
+  }),
+
+  // ==================== WRITE ====================
+
+  // POST /dramas
+  http.post("*/api/v1/dramas", async ({ request }) => {
+    const body = await request.json() as {
+      title: string;
+      description: string;
+      cover_url: string;
+      category_id: number;
+      tags: string[];
+    };
+    const drama = createDrama(body);
+    return HttpResponse.json({ code: 0, message: "success", data: drama }, { status: 201 });
+  }),
+
+  // PUT /dramas/:id
+  http.put("*/api/v1/dramas/:id", async ({ params, request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    const drama = updateDrama(Number(params.id), body);
+    if (!drama)
+      return HttpResponse.json({ code: 404, message: "Drama not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "success", data: drama });
+  }),
+
+  // DELETE /dramas/:id
+  http.delete("*/api/v1/dramas/:id", ({ params }) => {
+    const ok = deleteDrama(Number(params.id));
+    if (!ok)
+      return HttpResponse.json({ code: 404, message: "Drama not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "deleted", data: null });
+  }),
+
+  // PUT /dramas/:id/status
+  http.put("*/api/v1/dramas/:id/status", async ({ params, request }) => {
+    const body = await request.json() as { status: string };
+    const drama = updateDrama(Number(params.id), { status: body.status as MockDrama["status"] });
+    if (!drama)
+      return HttpResponse.json({ code: 404, message: "Drama not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "success", data: drama });
+  }),
+
+  // POST /dramas/:id/episodes
+  http.post("*/api/v1/dramas/:id/episodes", async ({ params, request }) => {
+    const body = await request.json() as {
+      episode_no: number;
+      title: string;
+      duration: number;
+      video_url: string;
+      subtitle_files?: { language: string; url: string }[];
+    };
+    const ep = addEpisode(Number(params.id), body);
+    if (!ep)
+      return HttpResponse.json({ code: 404, message: "Drama not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "success", data: ep }, { status: 201 });
+  }),
+
+  // PUT /episodes/:id
+  http.put("*/api/v1/episodes/:id", async ({ params, request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    const ep = updateEpisode(Number(params.id), body);
+    if (!ep)
+      return HttpResponse.json({ code: 404, message: "Episode not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "success", data: ep });
+  }),
+
+  // DELETE /episodes/:id
+  http.delete("*/api/v1/episodes/:id", ({ params }) => {
+    const ok = deleteEpisode(Number(params.id));
+    if (!ok)
+      return HttpResponse.json({ code: 404, message: "Episode not found", data: null }, { status: 404 });
+    return HttpResponse.json({ code: 0, message: "deleted", data: null });
   }),
 ];

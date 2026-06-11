@@ -127,3 +127,141 @@ export async function getEpisodePlay(
   );
   return res.data;
 }
+
+// ---- write endpoints ----
+
+export interface CreateDramaInput {
+  title: string;
+  description: string;
+  cover_url: string;
+  category_id: number;
+  tags: string[];
+}
+
+export interface UpdateDramaInput {
+  title?: string;
+  description?: string;
+  cover_url?: string;
+  category_id?: number;
+  tags?: string[];
+  status?: Drama["status"];
+}
+
+export interface CreateEpisodeInput {
+  episode_no: number;
+  title: string;
+  duration: number;
+  video_url: string;
+  subtitle_files?: { language: string; url: string }[];
+}
+
+export interface UpdateEpisodeInput {
+  episode_no?: number;
+  title?: string;
+  duration?: number;
+  video_url?: string;
+  status?: Episode["status"];
+}
+
+export async function createDrama(input: CreateDramaInput): Promise<Drama> {
+  const res = await apiFetch<Drama>("/dramas", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}
+
+export async function updateDrama(id: number, input: UpdateDramaInput): Promise<Drama> {
+  const res = await apiFetch<Drama>(`/dramas/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}
+
+export async function deleteDrama(id: number): Promise<void> {
+  await apiFetch(`/dramas/${id}`, { method: "DELETE" });
+}
+
+export async function updateDramaStatus(
+  id: number,
+  status: Drama["status"]
+): Promise<Drama> {
+  const res = await apiFetch<Drama>(`/dramas/${id}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+  return res.data;
+}
+
+export async function createEpisode(
+  dramaId: number,
+  input: CreateEpisodeInput
+): Promise<Episode> {
+  const res = await apiFetch<Episode>(`/dramas/${dramaId}/episodes`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}
+
+export async function updateEpisode(
+  id: number,
+  input: UpdateEpisodeInput
+): Promise<Episode> {
+  const res = await apiFetch<Episode>(`/episodes/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}
+
+export async function deleteEpisode(id: number): Promise<void> {
+  await apiFetch(`/episodes/${id}`, { method: "DELETE" });
+}
+
+// ---- video upload ----
+
+export interface UploadUrlRequest {
+  filename: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface UploadUrlResponse {
+  upload_id: string;
+  upload_url: string;
+  download_url: string;
+  expires_in: number;
+}
+
+export interface UploadCompleteRequest {
+  upload_id: string;
+  parts?: { part_number: number; etag: string }[];
+}
+
+export interface UploadCompleteResponse {
+  video_url: string;
+  duration: number;
+  status: string;
+}
+
+export async function getUploadUrl(
+  input: UploadUrlRequest
+): Promise<UploadUrlResponse> {
+  const res = await apiFetch<UploadUrlResponse>("/videos/upload-url", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}
+
+export async function completeUpload(
+  input: UploadCompleteRequest
+): Promise<UploadCompleteResponse> {
+  const res = await apiFetch<UploadCompleteResponse>("/videos/upload/complete", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.data;
+}

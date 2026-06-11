@@ -17,7 +17,7 @@ import type {
   CreateSubscriptionRequest,
 } from "@/lib/api/subscriptions";
 import type { AuthTokens, LoginRequest, RegisterRequest, OAuthProvider } from "@/lib/api/auth";
-import { mockDramas, mockEpisodes, mockVideoAssets } from "./data/dramas";
+import { mockDramas, mockEpisodes, mockVideoAssets, createDrama, updateDrama, deleteDrama, addEpisode, updateEpisode, deleteEpisode } from "./data/dramas";
 import { mockUsers } from "./data/users";
 import { mockSubscriptionPlans, mockSubscriptions } from "./data/subscriptions";
 
@@ -157,4 +157,91 @@ export async function serverCreateSubscription(
     ? "https://www.paypal.com/checkout/mock"
     : "https://checkout.stripe.com/pay/mock";
   return { subscription_id: 2, payment_url: url };
+}
+
+// ---- Drama write operations (SSR mock) ----
+
+export async function serverCreateDrama(input: {
+  title: string;
+  description: string;
+  cover_url: string;
+  category_id: number;
+  tags: string[];
+  status?: "draft" | "published" | "reviewing" | "archived";
+}) {
+  return createDrama(input);
+}
+
+export async function serverUpdateDrama(id: number, input: Record<string, unknown>) {
+  return updateDrama(id, input as Parameters<typeof updateDrama>[1]);
+}
+
+export async function serverDeleteDrama(id: number) {
+  return deleteDrama(id);
+}
+
+export async function serverUpdateDramaStatus(
+  id: number,
+  status: "draft" | "published" | "reviewing" | "archived"
+) {
+  return updateDrama(id, { status });
+}
+
+export async function serverAddEpisode(dramaId: number, input: {
+  episode_no: number;
+  title: string;
+  duration: number;
+  video_url: string;
+  subtitle_files?: { language: string; url: string }[];
+}) {
+  return addEpisode(dramaId, input);
+}
+
+export async function serverUpdateEpisode(id: number, input: Record<string, unknown>) {
+  return updateEpisode(id, input as Parameters<typeof updateEpisode>[1]);
+}
+
+export async function serverDeleteEpisode(id: number) {
+  return deleteEpisode(id);
+}
+
+// ---- Video upload helpers (SSR mock) ----
+
+export async function serverGetUploadUrl(input: {
+  filename: string;
+  file_size: number;
+  content_type: string;
+}) {
+  const allowedTypes = ["video/mp4", "video/quicktime", "video/webm"];
+  if (!allowedTypes.includes(input.content_type)) {
+    throw Object.assign(
+      new Error("Unsupported video format. Use MP4, MOV, or WebM."),
+      { code: 400 }
+    );
+  }
+  const maxSize = 2 * 1024 * 1024 * 1024;
+  if (input.file_size > maxSize) {
+    throw Object.assign(new Error("File too large. Maximum size is 2 GB."), { code: 400 });
+  }
+  const uploadId = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return {
+    upload_id: uploadId,
+    upload_url: `https://upload.mock.ai/${uploadId}`,
+    download_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    expires_in: 3600,
+  };
+}
+
+export async function serverCompleteUpload(input: {
+  upload_id: string;
+  parts?: { part_number: number; etag: string }[];
+}) {
+  if (!input.upload_id) {
+    throw Object.assign(new Error("Missing upload_id"), { code: 400 });
+  }
+  return {
+    video_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    duration: 120,
+    status: "ready",
+  };
 }

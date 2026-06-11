@@ -206,6 +206,192 @@ components:
         keyword:
           type: string
 
+    CreateDramaRequest:
+      type: object
+      required:
+        - title
+        - description
+        - cover_url
+        - category_id
+        - tags
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        cover_url:
+          type: string
+          format: uri
+          description: 封面图片 URL
+        category_id:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, published, reviewing, archived]
+          default: draft
+          description: 初始状态，默认 draft
+
+    UpdateDramaRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        cover_url:
+          type: string
+          format: uri
+        category_id:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, published, reviewing, archived]
+
+    CreateEpisodeRequest:
+      type: object
+      required:
+        - episode_no
+        - title
+        - duration
+        - video_url
+      properties:
+        episode_no:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        duration:
+          type: integer
+          description: 时长（秒）
+          minimum: 1
+        video_url:
+          type: string
+          format: uri
+          description: 上传完成后的视频 URL
+        subtitle_files:
+          type: array
+          description: 可选的字幕文件列表
+          items:
+            type: object
+            properties:
+              language:
+                type: string
+              url:
+                type: string
+                format: uri
+
+    UpdateEpisodeRequest:
+      type: object
+      properties:
+        episode_no:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        duration:
+          type: integer
+          minimum: 1
+        video_url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [processing, ready, failed]
+
+    # ========== 视频上传 ==========
+    UploadUrlRequest:
+      type: object
+      required:
+        - filename
+        - file_size
+        - content_type
+      properties:
+        filename:
+          type: string
+          description: 原始文件名
+        file_size:
+          type: integer
+          format: int64
+          description: 文件大小（字节），最大 2GB
+          maximum: 2147483648
+        content_type:
+          type: string
+          enum: [video/mp4, video/quicktime, video/webm]
+          description: MIME 类型
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: 上传会话 ID
+        upload_url:
+          type: string
+          format: uri
+          description: S3 预签名上传 URL
+        download_url:
+          type: string
+          format: uri
+          description: 上传完成后的视频访问 URL
+        expires_in:
+          type: integer
+          description: 上传 URL 有效期（秒）
+          example: 3600
+
+    UploadCompleteRequest:
+      type: object
+      required:
+        - upload_id
+      properties:
+        upload_id:
+          type: string
+          description: 上传会话 ID
+        parts:
+          type: array
+          description: 分片上传的 Part 列表（分片模式必传）
+          items:
+            type: object
+            properties:
+              part_number:
+                type: integer
+              etag:
+                type: string
+
+    UploadCompleteResponse:
+      type: object
+      properties:
+        video_url:
+          type: string
+          format: uri
+          description: 视频最终访问 URL
+        duration:
+          type: integer
+          description: 视频时长（秒）
+        status:
+          type: string
+          enum: [ready]
+          description: 视频处理状态
+
     Episode:
       type: object
       properties:
@@ -658,6 +844,12 @@ paths:
           in: query
           schema:
             type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, reviewing, archived]
+          description: 管理后台按状态筛选
         - name: sort
           in: query
           schema:
@@ -696,6 +888,35 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Drama'
+    post:
+      tags: [短剧]
+      summary: 创建短剧
+      description: 管理员/创作者创建短剧草稿
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDramaRequest'
+      responses:
+        "201":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Drama'
+        "400":
+          description: 参数校验失败
+        "401":
+          description: 未登录
+        "403":
+          description: 无权限（非管理员/创作者）
 
   /dramas/{id}:
     get:
@@ -721,6 +942,94 @@ paths:
                         $ref: '#/components/schemas/Drama'
         "404":
           description: 短剧不存在
+    put:
+      tags: [短剧]
+      summary: 更新短剧
+      description: 管理员/创作者更新短剧元数据
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDramaRequest'
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Drama'
+        "404":
+          description: 短剧不存在
+    delete:
+      tags: [短剧]
+      summary: 删除短剧
+      description: 管理员删除短剧及其所有剧集
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 删除成功
+        "404":
+          description: 短剧不存在
+
+  /dramas/{id}/status:
+    put:
+      tags: [短剧]
+      summary: 更新短剧状态
+      description: 管理员审核短剧（draft → reviewing → published/rejected）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, published, reviewing, archived]
+      responses:
+        "200":
+          description: 状态更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Drama'
 
   /dramas/{id}/episodes:
     get:
@@ -747,6 +1056,37 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Episode'
+    post:
+      tags: [短剧]
+      summary: 添加剧集
+      description: 管理员/创作者为短剧添加剧集（上传视频完成后调用）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            description: 短剧 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEpisodeRequest'
+      responses:
+        "201":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Episode'
 
   /episodes/{id}:
     get:
@@ -772,6 +1112,56 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/Episode'
+    put:
+      tags: [短剧]
+      summary: 更新剧集
+      description: 管理员/创作者更新剧集元数据
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEpisodeRequest'
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Episode'
+        "404":
+          description: 剧集不存在
+    delete:
+      tags: [短剧]
+      summary: 删除剧集
+      description: 管理员删除剧集及其关联数据
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 删除成功
+        "404":
+          description: 剧集不存在
 
   /episodes/{id}/play:
     get:
@@ -808,6 +1198,61 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/EpisodePlayInfo'
+
+  # ========== 视频上传 ==========
+  /videos/upload-url:
+    post:
+      tags: [视频上传]
+      summary: 获取视频上传 URL
+      description: 管理员/创作者请求上传视频，返回 S3/MinIO 预签名 URL
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        "200":
+          description: 上传 URL
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UploadUrlResponse'
+        "400":
+          description: 参数校验失败（格式不支持或文件过大）
+
+  /videos/upload/complete:
+    post:
+      tags: [视频上传]
+      summary: 上传完成回调
+      description: 前端上传完成后通知后端，后端写入 video_assets 并创建 AI 任务
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadCompleteRequest'
+      responses:
+        "200":
+          description: 上传完成
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UploadCompleteResponse'
+        "400":
+          description: 参数错误
 
   # ========== 收藏 ==========
   /favorites:

@@ -3,6 +3,7 @@ import { dramaHandlers } from "./drama";
 import { favoritesHandlers } from "./favorites";
 import { commentsHandlers } from "./comments";
 import { subscriptionsHandlers } from "./subscriptions";
+import { videoHandlers } from "./video";
 
 export const handlers = [
   ...authHandlers,
@@ -10,4 +11,5 @@ export const handlers = [
   ...favoritesHandlers,
   ...commentsHandlers,
   ...subscriptionsHandlers,
+  ...videoHandlers,
 ];
