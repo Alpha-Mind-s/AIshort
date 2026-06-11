@@ -38,3 +38,18 @@ type VideoQuality struct {
     URL        string `json:"url"`
     Bitrate    int    `json:"bitrate"`
 }
+
+type CreateEpisodeRequest struct {
+    EpisodeNo int    `json:"episode_no" binding:"required,min=1"`
+    Title     string `json:"title" binding:"required,min=1,max=200"`
+    Duration  int    `json:"duration" binding:"required,min=1"`
+    VideoURL  string `json:"video_url" binding:"required,uri"`
+}
+
+type UpdateEpisodeRequest struct {
+    EpisodeNo *int    `json:"episode_no,omitempty" binding:"omitempty,min=1"`
+    Title     *string `json:"title,omitempty" binding:"omitempty,min=1,max=200"`
+    Duration  *int    `json:"duration,omitempty" binding:"omitempty,min=1"`
+    VideoURL  *string `json:"video_url,omitempty" binding:"omitempty,uri"`
+    Status    *string `json:"status,omitempty" binding:"omitempty,oneof=processing ready failed"`
+}
