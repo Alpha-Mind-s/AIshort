@@ -15,10 +15,10 @@ services:
     command: go run . -addr :8080
     environment:
       - GIN_MODE=debug
-      - USER_SVC_ADDR=user-service:8081
-      - CONTENT_SVC_ADDR=content-service:8082
-      - VIDEO_SVC_ADDR=video-service:8083
-      - PAYMENT_SVC_ADDR=payment-service:8084
+      - USER_SVC_ADDR=user-service:8080
+      - CONTENT_SVC_ADDR=content-service:8080
+      - VIDEO_SVC_ADDR=video-service:8080
+      - PAYMENT_SVC_ADDR=payment-service:8080
       - REDIS_ADDR=redis:6379
       - GOWORK=off
     depends_on:
@@ -40,8 +40,8 @@ services:
     volumes:
       - ../backend:/app
     ports:
-      - "8081:8081"
-    command: go run ./cmd/server -addr :8081
+      - "8081:8080"
+    command: go run ./cmd/server -addr :8080
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
@@ -69,8 +69,8 @@ services:
     volumes:
       - ../backend:/app
     ports:
-      - "8082:8082"
-    command: go run ./cmd/server -addr :8082
+      - "8082:8080"
+    command: go run ./cmd/server -addr :8080
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
@@ -97,8 +97,8 @@ services:
     volumes:
       - ../backend:/app
     ports:
-      - "8083:8083"
-    command: go run ./cmd/server -addr :8083
+      - "8083:8080"
+    command: go run ./cmd/server -addr :8080
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
@@ -129,8 +129,8 @@ services:
     volumes:
       - ../backend:/app
     ports:
-      - "8084:8084"
-    command: go run ./cmd/server -addr :8084
+      - "8084:8080"
+    command: go run ./cmd/server -addr :8080
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
@@ -313,7 +313,7 @@ services:
     image: grafana/grafana:latest
     container_name: aishot-grafana
     ports:
-      - "3002:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
