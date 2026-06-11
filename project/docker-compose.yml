@@ -7,16 +7,17 @@ services:
   # API Gateway (Go)
   # ==========================================
   api-gateway:
-    image: golang:1.22-alpine
+    image: golang:1.25-alpine
     container_name: aishot-gateway
-    working_dir: /app
+    working_dir: /app/cmd/gateway
     volumes:
-      - ../backend/gateway:/app
+      - ../backend:/app
     ports:
       - "8080:8080"
-    command: go run ./cmd/gateway -addr :8080
+    command: go run .
     environment:
       - GIN_MODE=debug
+      - GATEWAY_ADDR=:8080
       - USER_SVC_ADDR=user-service:8081
       - CONTENT_SVC_ADDR=content-service:8082
       - VIDEO_SVC_ADDR=video-service:8083
@@ -35,16 +36,17 @@ services:
   # User & Auth Service (Go)
   # ==========================================
   user-service:
-    image: golang:1.22-alpine
+    image: golang:1.25-alpine
     container_name: aishot-user
-    working_dir: /app
+    working_dir: /app/services/user
     volumes:
-      - ../backend/services/user:/app
+      - ../backend:/app
     ports:
       - "8081:8081"
-    command: go run ./cmd/server -addr :8081
+    command: go run ./cmd/server
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - USER_SVC_ADDR=:8081
       - REDIS_ADDR=redis:6379
       - JWT_SECRET=dev-secret-change-in-production
       - GOOGLE_CLIENT_ID=
@@ -63,16 +65,17 @@ services:
   # Content Service (Go)
   # ==========================================
   content-service:
-    image: golang:1.22-alpine
+    image: golang:1.25-alpine
     container_name: aishot-content
-    working_dir: /app
+    working_dir: /app/services/content
     volumes:
-      - ../backend/services/content:/app
+      - ../backend:/app
     ports:
       - "8082:8082"
-    command: go run ./cmd/server -addr :8082
+    command: go run ./cmd/server
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - CONTENT_SVC_ADDR=:8082
       - REDIS_ADDR=redis:6379
       - ES_ADDR=elasticsearch:9200
     depends_on:
@@ -90,16 +93,17 @@ services:
   # Video Management Service (Go)
   # ==========================================
   video-service:
-    image: golang:1.22-alpine
+    image: golang:1.25-alpine
     container_name: aishot-video
-    working_dir: /app
+    working_dir: /app/services/video
     volumes:
-      - ../backend/services/video:/app
+      - ../backend:/app
     ports:
       - "8083:8083"
-    command: go run ./cmd/server -addr :8083
+    command: go run ./cmd/server
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - VIDEO_SVC_ADDR=:8083
       - REDIS_ADDR=redis:6379
       - S3_ENDPOINT=http://minio:9000
       - S3_ACCESS_KEY=minioadmin
@@ -121,16 +125,17 @@ services:
   # Payment Service (Go)
   # ==========================================
   payment-service:
-    image: golang:1.22-alpine
+    image: golang:1.25-alpine
     container_name: aishot-payment
-    working_dir: /app
+    working_dir: /app/services/payment
     volumes:
-      - ../backend/services/payment:/app
+      - ../backend:/app
     ports:
       - "8084:8084"
-    command: go run ./cmd/server -addr :8084
+    command: go run ./cmd/server
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - PAYMENT_SVC_ADDR=:8084
       - REDIS_ADDR=redis:6379
       - PAYPAL_CLIENT_ID=
       - PAYPAL_CLIENT_SECRET=
