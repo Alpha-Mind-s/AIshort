@@ -1,5 +1,7 @@
 go 1.25.0
 
 use (
-    ./pkg
+	./pkg
+	./cmd/gateway
+	./services/user
 )
