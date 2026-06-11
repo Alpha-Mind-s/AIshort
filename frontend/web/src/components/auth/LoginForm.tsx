@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/hooks";
 
 export function LoginForm() {
   const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const { login, isLoggingIn } = useAuth();
   const {
     register,
@@ -66,7 +67,7 @@ export function LoginForm() {
         disabled={isLoggingIn}
         className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
       >
-        {isLoggingIn ? t("common.loading") : t("submit_login")}
+        {isLoggingIn ? tc("loading") : t("submit_login")}
       </button>
     </form>
   );

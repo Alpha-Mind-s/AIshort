@@ -13,11 +13,13 @@ import {
   ArrowLeft,
   Menu,
   X,
+  PlusCircle,
 } from "lucide-react";
 import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "dashboard", icon: LayoutDashboard },
+  { href: "/admin/create", label: "create_drama", icon: PlusCircle },
   { href: "/admin/users", label: "users", icon: Users },
   { href: "/admin/content", label: "content", icon: FileCheck },
   { href: "/admin/analytics", label: "analytics", icon: BarChart3 },
