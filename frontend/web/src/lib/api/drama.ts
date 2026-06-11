@@ -228,23 +228,32 @@ export interface UploadUrlRequest {
   content_type: string;
 }
 
+/** Backend: POST /videos/upload-url response */
 export interface UploadUrlResponse {
-  upload_id: string;
   upload_url: string;
   download_url: string;
-  expires_in: number;
+  expires_at: number; // unix timestamp
 }
 
-export interface UploadCompleteRequest {
+export interface MultipartInitRequest {
+  filename: string;
+  file_size: number;
+  content_type: string;
+}
+
+/** Backend: POST /videos/multipart/init response */
+export interface MultipartInitResponse {
   upload_id: string;
-  parts?: { part_number: number; etag: string }[];
+  part_size: number;
+  parts: number;
 }
 
-export interface UploadCompleteResponse {
-  video_url: string;
-  duration: number;
-  status: string;
+export interface MultipartCompleteRequest {
+  upload_id: string;
+  parts: { part_number: number; etag: string }[];
 }
+
+// ---- API functions ----
 
 export async function getUploadUrl(
   input: UploadUrlRequest
@@ -256,12 +265,51 @@ export async function getUploadUrl(
   return res.data;
 }
 
-export async function completeUpload(
-  input: UploadCompleteRequest
-): Promise<UploadCompleteResponse> {
-  const res = await apiFetch<UploadCompleteResponse>("/videos/upload/complete", {
+export async function initMultipartUpload(
+  input: MultipartInitRequest
+): Promise<MultipartInitResponse> {
+  const res = await apiFetch<MultipartInitResponse>("/videos/multipart/init", {
     method: "POST",
     body: JSON.stringify(input),
   });
   return res.data;
+}
+
+export async function completeMultipartUpload(
+  input: MultipartCompleteRequest
+): Promise<void> {
+  await apiFetch("/videos/multipart/complete", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/**
+ * Upload a file to a presigned URL (direct S3/R2 PUT).
+ * Used after getUploadUrl() to push the file bytes.
+ */
+export async function uploadToPresignedUrl(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+    };
+
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    xhr.send(file);
+  });
 }

@@ -1,8 +1,15 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, FileVideo, X, CheckCircle, AlertCircle } from 'lucide-react'
+import {
+  getUploadUrl,
+  uploadToPresignedUrl,
+  initMultipartUpload,
+  completeMultipartUpload,
+} from '@/lib/api-client'
 
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
 const MAX_SIZE = 2 * 1024 * 1024 * 1024 // 2 GB
+const MULTIPART_THRESHOLD = 25 * 1024 * 1024 // 25 MB
 
 type Phase = 'idle' | 'uploading' | 'done' | 'error'
 
@@ -37,32 +44,34 @@ export function VideoUploader({
     setProgress(0)
 
     try {
-      // 1. Get upload URL
-      const res1 = await fetch('http://localhost:8080/api/v1/videos/upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, file_size: file.size, content_type: file.type }),
+      // Step 1: Get presigned upload URL from backend
+      const uploadInfo = await getUploadUrl({
+        filename: file.name,
+        file_size: file.size,
+        content_type: file.type,
       })
-      const json1 = await res1.json()
-      if (json1.code !== 0) throw new Error(json1.message)
 
-      // 2. Simulate chunked upload
-      const chunks = 10
-      for (let i = 1; i <= chunks; i++) {
-        await new Promise((r) => setTimeout(r, 200 + Math.random() * 300))
-        setProgress(Math.round((i / chunks) * 100))
+      // Step 2: Upload file to presigned URL with real progress
+      await uploadToPresignedUrl(uploadInfo.upload_url, file, (pct) => {
+        setProgress(pct)
+      })
+
+      // Step 3: For large files, complete multipart sequence
+      if (file.size > MULTIPART_THRESHOLD) {
+        const multipart = await initMultipartUpload({
+          filename: file.name,
+          file_size: file.size,
+          content_type: file.type,
+        })
+        await completeMultipartUpload({
+          upload_id: multipart.upload_id,
+          parts: [],
+        })
       }
 
-      // 3. Complete
-      const res2 = await fetch('http://localhost:8080/api/v1/videos/upload/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ upload_id: json1.data.upload_id }),
-      })
-      const json2 = await res2.json()
-      if (json2.code !== 0) throw new Error(json2.message)
-
-      onChange(json2.data.video_url, json2.data.duration || 120)
+      // Step 4: Use download_url as the final video URL
+      const estimatedDuration = Math.round((file.size / (1024 * 1024)) * 2)
+      onChange(uploadInfo.download_url, estimatedDuration)
       setPhase('done')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')

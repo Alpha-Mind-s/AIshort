@@ -1,30 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStudioAuth } from '@/stores/auth-store'
-import { Plus, Film, Search, LogOut, Edit, Trash2 } from 'lucide-react'
+import { getDramaList, deleteDrama, type DramaItem } from '@/lib/api-client'
+import { Plus, Film, Search, LogOut, Edit, Trash2, Users, TrendingUp, DollarSign, Play } from 'lucide-react'
 
-interface Drama {
-  id: number
-  title: string
-  cover_url: string
-  status: string
-  total_episodes: number
-  tags: string[]
-  created_at: string
-}
+const STATS = [
+  { key: 'total_users', value: '12,847', icon: Users, change: '+12%', color: 'text-blue-400' },
+  { key: 'total_dramas', value: '156', icon: Play, change: '+8%', color: 'text-purple-400' },
+  { key: 'daily_views', value: '48.2K', icon: TrendingUp, change: '+23%', color: 'text-green-400' },
+  { key: 'revenue', value: '$24,892', icon: DollarSign, change: '+18%', color: 'text-yellow-400' },
+]
 
 export default function DashboardPage() {
   const { user, clearAuth } = useStudioAuth()
   const navigate = useNavigate()
-  const [dramas, setDramas] = useState<Drama[]>([])
+  const [dramas, setDramas] = useState<DramaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   const fetchDramas = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/v1/dramas?page_size=100')
-      const json = await res.json()
-      if (json.code === 0) setDramas(json.data)
+      const json = await getDramaList({ page_size: 100 })
+      setDramas(json.data)
     } catch (e) {
       console.error('Failed to fetch dramas', e)
     } finally {
@@ -36,8 +33,12 @@ export default function DashboardPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this drama and all its episodes?')) return
-    await fetch(`http://localhost:8080/api/v1/dramas/${id}`, { method: 'DELETE' })
-    setDramas((prev) => prev.filter((d) => d.id !== id))
+    try {
+      await deleteDrama(id)
+      setDramas((prev) => prev.filter((d) => d.id !== id))
+    } catch (e) {
+      console.error('Failed to delete drama', e)
+    }
   }
 
   const filtered = dramas.filter((d) =>
@@ -71,9 +72,28 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Stats overview */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {STATS.map((stat) => {
+            const Icon = stat.icon
+            return (
+              <div key={stat.key} className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{stat.key.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</span>
+                  <Icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold">{stat.value}</span>
+                  <span className="text-xs text-green-400 font-medium">{stat.change}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
         {/* Toolbar */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">Dramas</h1>
             <p className="text-sm text-gray-500 mt-1">{dramas.length} total</p>
@@ -98,9 +118,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Recent activity + system status */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+            <h3 className="text-sm font-semibold text-gray-300 mb-3">Recent Activity</h3>
+            <div className="space-y-2 text-xs text-gray-500">
+              <p>• New user registered: user_12k</p>
+              <p>• Drama "Love in the Rain" hit 100K views</p>
+              <p>• Payment received: $79.99 (yearly plan)</p>
+              <p>• Content flag reviewed: 3 items</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+            <h3 className="text-sm font-semibold text-gray-300 mb-3">System Status</h3>
+            <div className="space-y-2 text-xs">
+              {[
+                { label: 'API', status: 'Operational', color: 'text-green-400' },
+                { label: 'CDN', status: 'Operational', color: 'text-green-400' },
+                { label: 'AI Pipeline', status: 'Degraded', color: 'text-yellow-400' },
+                { label: 'Storage', status: '98% available', color: 'text-green-400' },
+              ].map((item) => (
+                <div key={item.label} className="flex justify-between">
+                  <span className="text-gray-500">{item.label}</span>
+                  <span className={`font-medium ${item.color}`}>{item.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Drama grid */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">Loading...</div>
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-[200px] rounded-xl border border-white/10 bg-white/[0.02] animate-pulse" />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Film className="h-12 w-12 text-gray-700 mx-auto mb-4" />

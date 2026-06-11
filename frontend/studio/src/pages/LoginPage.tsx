@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStudioAuth } from '@/stores/auth-store'
+import { loginApi } from '@/lib/api-client'
 import { Film } from 'lucide-react'
 
 export default function LoginPage() {
@@ -17,15 +18,8 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8080/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const json = await res.json()
-      if (json.code !== 0) throw new Error(json.message || 'Login failed')
-
-      setAuth(json.data.user, json.data.access_token)
+      const tokens = await loginApi(email, password)
+      setAuth(tokens.user, tokens.access_token)
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

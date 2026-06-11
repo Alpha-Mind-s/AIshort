@@ -342,33 +342,62 @@ components:
     UploadUrlResponse:
       type: object
       properties:
-        upload_id:
-          type: string
-          description: 上传会话 ID
         upload_url:
           type: string
           format: uri
-          description: S3 预签名上传 URL
+          description: S3/R2 预签名上传 URL
         download_url:
           type: string
           format: uri
-          description: 上传完成后的视频访问 URL
-        expires_in:
+          description: 上传完成后的 CDN 访问 URL
+        expires_at:
           type: integer
-          description: 上传 URL 有效期（秒）
-          example: 3600
+          format: int64
+          description: 上传 URL 过期时间 (Unix 时间戳)
+          example: 1718000000
 
-    UploadCompleteRequest:
+    MultipartInitRequest:
       type: object
       required:
-        - upload_id
+        - filename
+        - file_size
+        - content_type
+      properties:
+        filename:
+          type: string
+        file_size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        content_type:
+          type: string
+          enum: [video/mp4, video/quicktime, video/webm]
+
+    MultipartInitResponse:
+      type: object
       properties:
         upload_id:
           type: string
-          description: 上传会话 ID
+          description: 分片上传会话 ID
+        part_size:
+          type: integer
+          format: int64
+          description: 每个分片大小（字节），默认 5MB
+        parts:
+          type: integer
+          description: 总分片数
+
+    MultipartCompleteRequest:
+      type: object
+      required:
+        - upload_id
+        - parts
+      properties:
+        upload_id:
+          type: string
+          description: 分片上传会话 ID
         parts:
           type: array
-          description: 分片上传的 Part 列表（分片模式必传）
           items:
             type: object
             properties:
@@ -376,21 +405,6 @@ components:
                 type: integer
               etag:
                 type: string
-
-    UploadCompleteResponse:
-      type: object
-      properties:
-        video_url:
-          type: string
-          format: uri
-          description: 视频最终访问 URL
-        duration:
-          type: integer
-          description: 视频时长（秒）
-        status:
-          type: string
-          enum: [ready]
-          description: 视频处理状态
 
     Episode:
       type: object
@@ -1227,11 +1241,11 @@ paths:
         "400":
           description: 参数校验失败（格式不支持或文件过大）
 
-  /videos/upload/complete:
+  /videos/multipart/init:
     post:
       tags: [视频上传]
-      summary: 上传完成回调
-      description: 前端上传完成后通知后端，后端写入 video_assets 并创建 AI 任务
+      summary: 初始化分片上传
+      description: 大文件（>25MB）使用分片上传，先获取 upload_id 和分片信息
       security:
         - BearerAuth: []
       requestBody:
@@ -1239,10 +1253,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UploadCompleteRequest'
+              $ref: '#/components/schemas/MultipartInitRequest'
       responses:
         "200":
-          description: 上传完成
+          description: 分片上传初始化成功
           content:
             application/json:
               schema:
@@ -1250,7 +1264,24 @@ paths:
                   - $ref: '#/components/schemas/ApiResponse'
                   - properties:
                       data:
-                        $ref: '#/components/schemas/UploadCompleteResponse'
+                        $ref: '#/components/schemas/MultipartInitResponse'
+
+  /videos/multipart/complete:
+    post:
+      tags: [视频上传]
+      summary: 完成分片上传
+      description: 所有分片上传完成后调用，后端触发转码和 AI 管线
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultipartCompleteRequest'
+      responses:
+        "200":
+          description: 分片上传完成，转码任务已入队
         "400":
           description: 参数错误
 

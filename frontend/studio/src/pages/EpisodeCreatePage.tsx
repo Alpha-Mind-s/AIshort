@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { getDramaDetail, createEpisode } from '@/lib/api-client'
 import { EpisodeForm, type EpisodeFormValues } from '@/components/EpisodeForm'
 import { ArrowLeft } from 'lucide-react'
 
@@ -14,14 +15,10 @@ export default function EpisodeCreatePage() {
 
   useEffect(() => {
     if (!dramaId) return
-    // Fetch existing episodes to determine next episode number
-    fetch(`http://localhost:8080/api/v1/dramas/${dramaId}`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.code === 0) {
-          setDramaTitle(j.data.title)
-          setNextEpisodeNo(j.data.total_episodes + 1)
-        }
+    getDramaDetail(dramaId)
+      .then((json) => {
+        setDramaTitle(json.data.title)
+        setNextEpisodeNo(json.data.total_episodes + 1)
       })
       .catch(console.error)
   }, [dramaId])
@@ -31,14 +28,13 @@ export default function EpisodeCreatePage() {
     setIsSubmitting(true)
     setError('')
     try {
-      const res = await fetch(`http://localhost:8080/api/v1/dramas/${dramaId}/episodes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      await createEpisode(dramaId, {
+        episode_no: data.episode_no,
+        title: data.title,
+        duration: data.duration,
+        video_url: data.video_url,
+        subtitle_files: data.subtitles?.length ? data.subtitles : undefined,
       })
-      const json = await res.json()
-      if (json.code !== 0) throw new Error(json.message || 'Failed to add episode')
-
       navigate(`/dramas/${dramaId}`, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add episode')

@@ -4,14 +4,22 @@ import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Upload, FileVideo, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { getUploadUrl, completeUpload } from "@/lib/api/drama";
+import {
+  getUploadUrl,
+  uploadToPresignedUrl,
+  initMultipartUpload,
+  completeMultipartUpload,
+} from "@/lib/api/drama";
 
 interface VideoUploaderProps {
   value?: string; // current video_url
   onChange: (videoUrl: string, duration: number) => void;
 }
 
-type UploadPhase = "idle" | "selecting" | "uploading" | "done" | "error";
+type UploadPhase = "idle" | "uploading" | "done" | "error";
+
+/** File size threshold for multipart upload (25 MB) */
+const MULTIPART_THRESHOLD = 25 * 1024 * 1024;
 
 export function VideoUploader({ value, onChange }: VideoUploaderProps) {
   const t = useTranslations("admin");
@@ -25,18 +33,15 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
   const allowedTypes = ["video/mp4", "video/quicktime", "video/webm"];
   const maxSize = 2 * 1024 * 1024 * 1024; // 2 GB
 
-  const validateFile = useCallback(
-    (file: File): string | null => {
-      if (!allowedTypes.includes(file.type)) {
-        return "Unsupported video format. Use MP4, MOV, or WebM.";
-      }
-      if (file.size > maxSize) {
-        return "File too large. Maximum size is 2 GB.";
-      }
-      return null;
-    },
-    []
-  );
+  const validateFile = useCallback((file: File): string | null => {
+    if (!allowedTypes.includes(file.type)) {
+      return "Unsupported video format. Use MP4, MOV, or WebM.";
+    }
+    if (file.size > maxSize) {
+      return "File too large. Maximum size is 2 GB.";
+    }
+    return null;
+  }, []);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -54,26 +59,35 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
       setProgress(0);
 
       try {
-        // 1. Get upload URL
+        // Step 1: Get presigned upload URL from backend
         const uploadInfo = await getUploadUrl({
           filename: file.name,
           file_size: file.size,
           content_type: file.type,
         });
 
-        // 2. Simulate chunked upload with progress
-        const chunks = 10;
-        for (let i = 1; i <= chunks; i++) {
-          await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
-          setProgress(Math.round((i / chunks) * 100));
-        }
-
-        // 3. Complete upload
-        const result = await completeUpload({
-          upload_id: uploadInfo.upload_id,
+        // Step 2: Upload file to presigned URL with real progress
+        await uploadToPresignedUrl(uploadInfo.upload_url, file, (pct) => {
+          setProgress(pct);
         });
 
-        onChange(result.video_url, result.duration);
+        // Step 3 (optional): For large files, complete multipart
+        if (file.size > MULTIPART_THRESHOLD) {
+          const multipart = await initMultipartUpload({
+            filename: file.name,
+            file_size: file.size,
+            content_type: file.type,
+          });
+          await completeMultipartUpload({
+            upload_id: multipart.upload_id,
+            parts: [],
+          });
+        }
+
+        // Step 4: Use download_url as the final video URL
+        // Estimate duration from file size (rough: 1 MB ≈ 2 sec at 4 Mbps)
+        const estimatedDuration = Math.round((file.size / (1024 * 1024)) * 2);
+        onChange(uploadInfo.download_url, estimatedDuration);
         setPhase("done");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
@@ -200,7 +214,7 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
           }}
           className="text-xs text-primary hover:opacity-80 transition-opacity"
         >
-          {t("retry")}
+          Try again
         </button>
       </div>
     );

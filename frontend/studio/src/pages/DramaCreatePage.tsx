@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createDrama } from '@/lib/api-client'
 import { DramaForm, type DramaFormValues } from '@/components/DramaForm'
 import { ArrowLeft } from 'lucide-react'
 
@@ -12,14 +13,13 @@ export default function DramaCreatePage() {
     setIsSubmitting(true)
     setError('')
     try {
-      const res = await fetch('http://localhost:8080/api/v1/dramas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      const json = await createDrama({
+        title: data.title,
+        description: data.description,
+        cover_url: data.cover_url,
+        category_id: data.category_id,
+        tags: data.tags,
       })
-      const json = await res.json()
-      if (json.code !== 0) throw new Error(json.message || 'Failed to create')
-
       navigate(`/dramas/${json.data.id}`, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create drama')

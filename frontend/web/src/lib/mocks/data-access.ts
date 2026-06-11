@@ -225,23 +225,30 @@ export async function serverGetUploadUrl(input: {
   }
   const uploadId = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   return {
-    upload_id: uploadId,
     upload_url: `https://upload.mock.ai/${uploadId}`,
     download_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
-    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
   };
 }
 
-export async function serverCompleteUpload(input: {
+export async function serverInitMultipart(input: {
+  filename: string;
+  file_size: number;
+  content_type: string;
+}) {
+  const uploadId = `mp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const partSize = 5 * 1024 * 1024;
+  const parts = Math.ceil(input.file_size / partSize);
+  return { upload_id: uploadId, part_size: partSize, parts };
+}
+
+export async function serverCompleteMultipart(input: {
   upload_id: string;
   parts?: { part_number: number; etag: string }[];
 }) {
   if (!input.upload_id) {
     throw Object.assign(new Error("Missing upload_id"), { code: 400 });
   }
-  return {
-    video_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
-    duration: 120,
-    status: "ready",
-  };
+  // Backend returns null on success
+  return null;
 }

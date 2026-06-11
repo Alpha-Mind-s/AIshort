@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { serverGetDramaList } from "@/lib/mocks/data-access";
+import type { Drama, PaginatedMeta } from "@/lib/api/drama";
 import { DramaGrid } from "@/components/drama/DramaGrid";
 import { HeroBanner } from "@/components/drama/HeroBanner";
 import { HomePageClient } from "./HomePageClient";
