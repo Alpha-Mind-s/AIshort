@@ -22,9 +22,16 @@ type MultipartInitRequest struct {
 }
 
 type MultipartInitResponse struct {
-	UploadID string `json:"upload_id"`
-	PartSize int64  `json:"part_size"`
-	Parts    int    `json:"parts"`
+	UploadID    string             `json:"upload_id"`
+	PartSize    int64              `json:"part_size"`
+	Parts       int                `json:"parts"`
+	PartURLs    []MultipartPartURL `json:"part_urls"`
+	DownloadURL string             `json:"download_url"`
+}
+
+type MultipartPartURL struct {
+	PartNumber int    `json:"part_number"`
+	UploadURL  string `json:"upload_url"`
 }
 
 type MultipartCompleteRequest struct {
@@ -49,7 +56,7 @@ type VideoAsset struct {
 
 type UploadCompleteRequest struct {
 	UploadID  string `json:"upload_id" binding:"required"`
-	EpisodeID int64  `json:"episode_id" binding:"required"`
+	EpisodeID int64  `json:"episode_id"`
 	Duration  *int   `json:"duration,omitempty"`
 	FileSize  int64  `json:"file_size,omitempty"`
 }
@@ -61,10 +68,19 @@ type UploadCompleteResponse struct {
 }
 
 type UploadSession struct {
-	UploadID    string
-	ObjectKey   string
-	Filename    string
-	FileSize    int64
-	ContentType string
-	CreatedAt   time.Time
+	UploadID    string    `json:"upload_id"`
+	ObjectKey   string    `json:"object_key"`
+	Filename    string    `json:"filename"`
+	FileSize    int64     `json:"file_size"`
+	ContentType string    `json:"content_type"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// Task represents an AI job associated with a video/episode.
+type Task struct {
+	ID        int64     `json:"id"`
+	EpisodeID int64     `json:"episode_id"`
+	JobType   string    `json:"job_type"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }

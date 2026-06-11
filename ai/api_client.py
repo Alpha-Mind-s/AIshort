@@ -20,6 +20,7 @@ class APIClient:
         self.base_url = settings.API_GATEWAY_URL.rstrip("/")
         self.timeout = 30  # 秒
         self.max_retries = 3
+        self.internal_api_key = settings.INTERNAL_API_KEY
 
     # ==================================================================
     # AI 任务状态回调
@@ -184,6 +185,12 @@ class APIClient:
 
     def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response | None:
         """带重试的 HTTP 请求"""
+        # Inject internal API key if configured
+        if self.internal_api_key:
+            headers = kwargs.get("headers", {})
+            headers["X-Internal-Api-Key"] = self.internal_api_key
+            kwargs["headers"] = headers
+
         last_error = None
 
         for attempt in range(1, self.max_retries + 1):

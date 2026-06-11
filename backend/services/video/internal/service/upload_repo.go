@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/ai-shot/video-svc/internal/model"
 )
 
 type UploadRepo struct {
@@ -50,4 +52,33 @@ func (r *UploadRepo) ProcessUpload(ctx context.Context, episodeID int64, fileURL
 	}
 
 	return tx.Commit(ctx)
+}
+
+// UpdateEpisodeURL updates the episode's video_url after transcoding.
+func (r *UploadRepo) UpdateEpisodeURL(ctx context.Context, episodeID int64, videoURL string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE episodes SET video_url=$1, updated_at=NOW() WHERE id=$2`,
+		videoURL, episodeID)
+	return err
+}
+
+// GetTasks returns AI jobs for a given episode ID.
+func (r *UploadRepo) GetTasks(ctx context.Context, episodeID int64) ([]model.Task, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, episode_id, job_type, status, created_at
+		 FROM ai_jobs WHERE episode_id = $1 ORDER BY id`, episodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []model.Task
+	for rows.Next() {
+		var t model.Task
+		if err := rows.Scan(&t.ID, &t.EpisodeID, &t.JobType, &t.Status, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, t)
+	}
+	return tasks, nil
 }

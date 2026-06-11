@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server config.ServerConfig
 	DB     config.DatabaseConfig
+	Redis  config.RedisConfig
 	S3     S3Config
 }
 
@@ -25,6 +26,7 @@ func Load() *Config {
 	cfg := &Config{}
 	cfg.Server.Load("VIDEO_SVC")
 	cfg.DB.Load("DB")
+	cfg.Redis.Load("REDIS")
 	cfg.S3.Endpoint = getEnv("S3_ENDPOINT", "http://localhost:9000")
 	cfg.S3.Bucket = getEnv("S3_BUCKET", "aishot-videos")
 	cfg.S3.AccessKey = getEnv("S3_ACCESS_KEY", "minioadmin")

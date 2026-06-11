@@ -3,25 +3,25 @@ import { z } from "zod";
 // ---- Form schemas ----
 
 export const loginSchema = z.object({
-  email: z.string().min(1, "auth.error_required").email("auth.error_email"),
+  email: z.string().min(1, "error_required").email("error_email"),
   password: z
     .string()
-    .min(1, "auth.error_required")
-    .min(8, "auth.error_password"),
+    .min(1, "error_required")
+    .min(8, "error_password"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  email: z.string().min(1, "auth.error_required").email("auth.error_email"),
+  email: z.string().min(1, "error_required").email("error_email"),
   password: z
     .string()
-    .min(1, "auth.error_required")
-    .min(8, "auth.error_password"),
+    .min(1, "error_required")
+    .min(8, "error_password"),
   nickname: z
     .string()
-    .min(1, "auth.error_required")
-    .max(100, "auth.error_required"),
+    .min(1, "error_required")
+    .max(100, "error_required"),
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;

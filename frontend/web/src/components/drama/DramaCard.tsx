@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Link } from "@/lib/i18n/navigation";
 import { formatCount } from "@/lib/utils/format";
+import { getImageUrl } from "@/lib/utils/image-url";
 import { Play } from "lucide-react";
 import type { Drama } from "@/lib/api/drama";
 
@@ -16,13 +17,21 @@ export function DramaCard({ drama }: DramaCardProps) {
     >
       {/* Cover */}
       <div className="relative aspect-[2/3] bg-muted overflow-hidden">
-        <Image
-          src={drama.cover_url}
-          alt={drama.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        {drama.cover_url ? (
+          <Image
+            src={getImageUrl(drama.cover_url)}
+            alt={drama.title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
+            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+            </svg>
+          </div>
+        )}
         {/* Play overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
           <Play className="h-10 w-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="white" />

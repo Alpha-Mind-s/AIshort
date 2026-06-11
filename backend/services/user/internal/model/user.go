@@ -1,6 +1,11 @@
 package model
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var ErrUserNotFound = errors.New("user not found")
 
 type User struct {
 	ID            int64     `json:"id"`
@@ -22,6 +27,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	Nickname string `json:"nickname" binding:"required,min=1,max=100"`
+	Role     string `json:"role"`
 }
 
 type LoginRequest struct {

@@ -26,11 +26,13 @@ export function EpisodeForm({
   defaultValues,
   nextEpisodeNo,
   onSubmit,
+  onUploadId,
   isSubmitting = false,
 }: {
   defaultValues?: Partial<EpisodeFormValues>
   nextEpisodeNo: number
   onSubmit: (data: EpisodeFormValues) => Promise<void>
+  onUploadId?: (id: string) => void
   isSubmitting?: boolean
 }) {
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<EpisodeFormValues>({
@@ -67,7 +69,7 @@ export function EpisodeForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">Video File</label>
-        <VideoUploader value={videoUrl || undefined} onChange={(url, duration) => { setValue('video_url', url); if (duration) setValue('duration', duration) }} />
+        <VideoUploader value={videoUrl || undefined} onChange={(url, duration, uploadId) => { setValue('video_url', url); if (duration) setValue('duration', duration); onUploadId?.(uploadId) }} />
         {errors.video_url && <p className="text-xs text-red-400 mt-1">{errors.video_url.message}</p>}
       </div>
 

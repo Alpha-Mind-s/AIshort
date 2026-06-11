@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "**.cloudflare.com" },
       { protocol: "https", hostname: "**.amazonaws.com" },
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "host.docker.internal" },
+      { protocol: "http", hostname: "api-gateway" },
     ],
   },
 };

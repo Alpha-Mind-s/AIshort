@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, FileVideo, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { apiFetch } from '@/lib/api-client'
 
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
 const MAX_SIZE = 2 * 1024 * 1024 * 1024 // 2 GB
@@ -11,7 +12,7 @@ export function VideoUploader({
   onChange,
 }: {
   value?: string
-  onChange: (videoUrl: string, duration: number) => void
+  onChange: (videoUrl: string, duration: number, uploadId: string) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>(value ? 'done' : 'idle')
@@ -37,32 +38,38 @@ export function VideoUploader({
     setProgress(0)
 
     try {
-      // 1. Get upload URL
-      const res1 = await fetch('http://localhost:8080/api/v1/videos/upload-url', {
+      // 1. Get presigned upload URL
+      const uploadRes = await apiFetch<{ upload_id: string; upload_url: string; download_url: string }>('/videos/upload-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, file_size: file.size, content_type: file.type }),
       })
-      const json1 = await res1.json()
-      if (json1.code !== 0) throw new Error(json1.message)
 
-      // 2. Simulate chunked upload
-      const chunks = 10
-      for (let i = 1; i <= chunks; i++) {
-        await new Promise((r) => setTimeout(r, 200 + Math.random() * 300))
-        setProgress(Math.round((i / chunks) * 100))
-      }
+      // 2. Real XHR upload to MinIO with progress tracking
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadRes.data.upload_url)
+        xhr.setRequestHeader('Content-Type', file.type)
 
-      // 3. Complete
-      const res2 = await fetch('http://localhost:8080/api/v1/videos/upload/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ upload_id: json1.data.upload_id }),
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(Math.round((e.loaded / e.total) * 100))
+          }
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            reject(new Error(`Upload failed: HTTP ${xhr.status}`))
+          }
+        }
+
+        xhr.onerror = () => reject(new Error('Network error during upload'))
+        xhr.send(file)
       })
-      const json2 = await res2.json()
-      if (json2.code !== 0) throw new Error(json2.message)
 
-      onChange(json2.data.video_url, json2.data.duration || 120)
+      // 3. Return video URL and upload ID (CompleteUpload handled by parent after episode creation)
+      onChange(uploadRes.data.download_url, 0, uploadRes.data.upload_id)
       setPhase('done')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')

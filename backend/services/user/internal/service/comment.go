@@ -9,11 +9,12 @@ import (
 )
 
 type CommentService struct {
-    repo *repository.CommentRepository
+    repo     *repository.CommentRepository
+    userRepo *repository.UserRepository
 }
 
-func NewCommentService(repo *repository.CommentRepository) *CommentService {
-    return &CommentService{repo: repo}
+func NewCommentService(repo *repository.CommentRepository, userRepo *repository.UserRepository) *CommentService {
+    return &CommentService{repo: repo, userRepo: userRepo}
 }
 
 func (s *CommentService) Create(ctx context.Context, userID, dramaID int64, req *model.CreateCommentRequest) (*model.Comment, error) {
@@ -25,6 +26,11 @@ func (s *CommentService) Create(ctx context.Context, userID, dramaID int64, req 
     }
     if err := s.repo.Create(ctx, comment); err != nil {
         return nil, err
+    }
+    // Populate the user field from the database
+    user, err := s.userRepo.FindByID(ctx, userID)
+    if err == nil {
+        comment.User = user
     }
     return comment, nil
 }
@@ -42,4 +48,31 @@ func (s *CommentService) Delete(ctx context.Context, commentID, userID int64) er
         return pkgErr.ErrCommentForbidden
     }
     return s.repo.Delete(ctx, commentID, userID)
+}
+
+// LikeResult is returned after toggling a like.
+type LikeResult struct {
+    CommentID  int64 `json:"comment_id"`
+    IsLiked    bool  `json:"is_liked"`
+    LikesCount int   `json:"likes_count"`
+}
+
+// ToggleLike toggles a like on a comment and returns the new state.
+func (s *CommentService) ToggleLike(ctx context.Context, userID, commentID int64) (*LikeResult, error) {
+    // Ensure comment exists
+    _, err := s.repo.FindByID(ctx, commentID)
+    if err != nil {
+        return nil, pkgErr.ErrNotFound
+    }
+
+    isLiked, likesCount, err := s.repo.ToggleLike(ctx, userID, commentID)
+    if err != nil {
+        return nil, err
+    }
+
+    return &LikeResult{
+        CommentID:  commentID,
+        IsLiked:    isLiked,
+        LikesCount: likesCount,
+    }, nil
 }

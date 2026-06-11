@@ -44,7 +44,8 @@ export function useAuth() {
         toast.success("Welcome back!");
         router.push("/");
       } catch {
-        toast.error("OAuth login failed");
+        toast.error("OAuth login is not available yet. Please use email login.");
+        router.push("/login");
       }
     },
     [setAuth, router]

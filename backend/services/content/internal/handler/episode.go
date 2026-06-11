@@ -5,6 +5,7 @@ import (
     "strconv"
 
     "github.com/gin-gonic/gin"
+    "github.com/ai-shot/pkg/logger"
     "github.com/ai-shot/pkg/response"
     pkgErr "github.com/ai-shot/pkg/errors"
     "github.com/ai-shot/content-svc/internal/model"
@@ -75,6 +76,7 @@ func (h *EpisodeHandler) Create(c *gin.Context) {
 
 	episode, err := h.repo.Create(c.Request.Context(), dramaID, &req)
 	if err != nil {
+		logger.Error().Err(err).Int64("drama_id", dramaID).Int("episode_no", req.EpisodeNo).Msg("failed to create episode")
 		response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
 		return
 	}

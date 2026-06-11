@@ -2,9 +2,11 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, X, ImageIcon } from "lucide-react";
+import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
+import { getUploadUrl } from "@/lib/api/drama";
+import { getImageUrl } from "@/lib/utils/image-url";
 
 interface CoverUploaderProps {
   value?: string;
@@ -14,11 +16,12 @@ interface CoverUploaderProps {
 export function CoverUploader({ value, onChange }: CoverUploaderProps) {
   const t = useTranslations("admin");
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(value || null);
+  const [preview, setPreview] = useState<string | null>(getImageUrl(value) || null);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   const handleFile = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setError("");
 
       const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -33,14 +36,45 @@ export function CoverUploader({ value, onChange }: CoverUploaderProps) {
         return;
       }
 
-      // In mock mode, create a local object URL for preview
-      // and pass a placeholder URL as the "uploaded" cover
+      // Show local preview immediately
       const objectUrl = URL.createObjectURL(file);
       setPreview(objectUrl);
+      setUploading(true);
 
-      // Use picsum with a random seed as mock cover URL
-      const mockUrl = `https://picsum.photos/seed/${Date.now()}/400/600`;
-      onChange(mockUrl);
+      try {
+        // 1. Get presigned upload URL from backend
+        const uploadRes = await getUploadUrl({
+          filename: file.name,
+          file_size: file.size,
+          content_type: file.type,
+        });
+
+        // 2. Real XHR upload to MinIO via presigned URL
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadRes.upload_url);
+          xhr.setRequestHeader("Content-Type", file.type);
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Network error during upload"));
+          xhr.send(file);
+        });
+
+        // 3. Return the actual download URL from backend
+        onChange(uploadRes.download_url);
+        setPreview(getImageUrl(uploadRes.download_url));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Upload failed");
+      } finally {
+        setUploading(false);
+      }
     },
     [onChange]
   );
@@ -77,6 +111,11 @@ export function CoverUploader({ value, onChange }: CoverUploaderProps) {
             sizes="144px"
             className="object-cover"
           />
+          {uploading && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            </div>
+          )}
         </div>
         <div className="absolute -top-2 -right-2 flex gap-1">
           <button

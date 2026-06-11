@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DramaForm, type DramaFormValues } from '@/components/DramaForm'
 import { EpisodeListEditor, type EpisodeItem } from '@/components/EpisodeListEditor'
+import { apiFetch } from '@/lib/api-client'
 import { ArrowLeft, Plus } from 'lucide-react'
 
 export default function DramaEditPage() {
@@ -17,32 +18,31 @@ export default function DramaEditPage() {
 
   const fetchData = async () => {
     try {
-      const [dramaRes, epRes] = await Promise.all([
-        fetch(`http://localhost:8080/api/v1/dramas/${dramaId}`),
-        fetch(`http://localhost:8080/api/v1/dramas/${dramaId}/episodes`),
+      const [dramaJson, epJson] = await Promise.all([
+        apiFetch(`/dramas/${dramaId}`),
+        apiFetch(`/dramas/${dramaId}/episodes`),
       ])
-      const dramaJson = await dramaRes.json()
-      const epJson = await epRes.json()
       if (dramaJson.code === 0) {
-        const d = dramaJson.data
+        const d = dramaJson.data as Record<string, unknown>
         setDrama({
-          title: d.title,
-          description: d.description,
-          cover_url: d.cover_url,
-          category_id: d.category_id,
-          tags: d.tags,
-          status: d.status,
+          title: d.title as string,
+          description: d.description as string,
+          cover_url: d.cover_url as string,
+          category_id: d.category_id as number,
+          tags: d.tags as string[],
+          status: d.status as string,
         })
       }
       if (epJson.code === 0) {
+        const epData = (epJson.data || []) as Array<{ id: number; episode_no: number; title: string; duration: number; status: string; localizations: unknown[] }>
         setEpisodes(
-          epJson.data.map((e: { id: number; episode_no: number; title: string; duration: number; status: string; localizations: unknown[] }) => ({
+          epData.map((e) => ({
             id: e.id,
             episode_no: e.episode_no,
             title: e.title,
             duration: e.duration,
             status: e.status,
-            languages: e.localizations.length,
+            languages: (e.localizations || []).length,
           }))
         )
       }
@@ -59,13 +59,10 @@ export default function DramaEditPage() {
     setSaving(true)
     setError('')
     try {
-      const res = await fetch(`http://localhost:8080/api/v1/dramas/${dramaId}`, {
+      await apiFetch(`/dramas/${dramaId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      const json = await res.json()
-      if (json.code !== 0) throw new Error(json.message || 'Failed to update')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to update drama')
     } finally {
@@ -77,7 +74,7 @@ export default function DramaEditPage() {
     if (!confirm('Delete this episode?')) return
     setDeletingEp(epId)
     try {
-      await fetch(`http://localhost:8080/api/v1/episodes/${epId}`, { method: 'DELETE' })
+      await apiFetch(`/episodes/${epId}`, { method: 'DELETE' })
       setEpisodes((prev) => prev.filter((e) => e.id !== epId))
       fetchData() // Refresh episode count
     } catch (e) {

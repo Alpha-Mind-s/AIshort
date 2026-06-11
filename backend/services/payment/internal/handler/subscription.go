@@ -59,7 +59,8 @@ func (h *SubscriptionHandler) Status(c *gin.Context) {
 	userID := c.GetInt64("user_id")
 	sub, err := h.svc.Status(c.Request.Context(), userID)
 	if err != nil {
-		response.Error(c, http.StatusNotFound, pkgErr.ErrNotFound.Code, "no active subscription")
+		// Return null data instead of 404 — the frontend treats 404 as an error.
+		response.OK(c, nil)
 		return
 	}
 

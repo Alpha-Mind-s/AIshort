@@ -3,15 +3,16 @@ package model
 import "time"
 
 type Subscription struct {
-	ID        int64     `json:"id"`
-	UserID    int64     `json:"user_id"`
-	PlanType  string    `json:"plan_type"`
-	StartAt   time.Time `json:"start_at"`
-	EndAt     time.Time `json:"end_at"`
-	Status    string    `json:"status"`
-	AutoRenew bool      `json:"auto_renew"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          int64     `json:"id"`
+	UserID      int64     `json:"user_id"`
+	PlanType    string    `json:"plan_type"`
+	StartAt     time.Time `json:"start_at"`
+	EndAt       time.Time `json:"end_at"`
+	Status      string    `json:"status"`
+	AutoRenew   bool      `json:"auto_renew"`
+	StripeSubID string    `json:"stripe_sub_id,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type SubscriptionPlan struct {

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -34,11 +36,16 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return nil, pkgErr.ErrInternal
 	}
 
+	role := req.Role
+	if role == "" {
+		role = "user"
+	}
+
 	user := &model.User{
 		Email:        req.Email,
 		Nickname:     req.Nickname,
 		PasswordHash: string(hashedPassword),
-		Role:         "user",
+		Role:         role,
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -51,7 +58,11 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*model.AuthTokens, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, pkgErr.ErrInvalidCredentials
+		// Distinguish between "not found" and actual DB errors
+		if errors.Is(err, model.ErrUserNotFound) {
+			return nil, pkgErr.ErrInvalidCredentials
+		}
+		return nil, fmt.Errorf("login: %w", err)
 	}
 
 	if user.Status == "banned" {
@@ -88,6 +99,51 @@ func (s *AuthService) Logout(ctx context.Context, accessToken string, userID int
 		return pkgErr.ErrInternal
 	}
 	return nil
+}
+
+// OAuthLogin handles Google OAuth callback. Exchanges authorization code for
+// tokens, looks up or creates the user, and returns JWT tokens.
+func (s *AuthService) OAuthLogin(ctx context.Context, provider, code, redirectURI string) (*model.AuthTokens, error) {
+	if provider != "google" {
+		return nil, fmt.Errorf("unsupported OAuth provider: %s (only 'google' is supported)", provider)
+	}
+
+	// Exchange authorization code for Google tokens
+	googleUser, err := exchangeGoogleCode(code, redirectURI)
+	if err != nil {
+		return nil, fmt.Errorf("google token exchange: %w", err)
+	}
+
+	// Find existing user by OAuth provider + ID
+	user, err := s.userRepo.FindByOAuth(ctx, provider, googleUser.ID)
+	if err == nil {
+		return s.generateTokens(ctx, user)
+	}
+
+	// Find by email (account linking: same email = same user)
+	user, err = s.userRepo.FindByEmail(ctx, googleUser.Email)
+	if err == nil {
+		// Link OAuth to existing account
+		if err := s.userRepo.LinkOAuth(ctx, user.ID, provider, googleUser.ID); err != nil {
+			return nil, fmt.Errorf("link oauth: %w", err)
+		}
+		return s.generateTokens(ctx, user)
+	}
+
+	// Create new user
+	newUser := &model.User{
+		Email:         googleUser.Email,
+		Nickname:      googleUser.Name,
+		AvatarURL:     googleUser.Picture,
+		OAuthProvider: provider,
+		OAuthID:       googleUser.ID,
+		Role:          "user",
+	}
+	if err := s.userRepo.Create(ctx, newUser); err != nil {
+		return nil, fmt.Errorf("create oauth user: %w", err)
+	}
+
+	return s.generateTokens(ctx, newUser)
 }
 
 func (s *AuthService) generateTokens(ctx context.Context, user *model.User) (*model.AuthTokens, error) {

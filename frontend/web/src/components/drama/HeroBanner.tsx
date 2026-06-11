@@ -3,6 +3,7 @@ import { Link } from "@/lib/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Play } from "lucide-react";
 import { formatCount } from "@/lib/utils/format";
+import { getImageUrl } from "@/lib/utils/image-url";
 import type { Drama } from "@/lib/api/drama";
 
 interface HeroBannerProps {
@@ -15,14 +16,18 @@ export function HeroBanner({ drama }: HeroBannerProps) {
   return (
     <section className="relative w-full h-[50vh] min-h-[320px] max-h-[500px] overflow-hidden rounded-xl">
       {/* Background image */}
-      <Image
-        src={drama.cover_url}
-        alt={drama.title}
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
+      {drama.cover_url ? (
+        <Image
+          src={getImageUrl(drama.cover_url)}
+          alt={drama.title}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+      )}
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
 

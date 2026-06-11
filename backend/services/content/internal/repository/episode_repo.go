@@ -20,7 +20,7 @@ func NewEpisodeRepository(pool *pgxpool.Pool) *EpisodeRepository {
 func (r *EpisodeRepository) FindByDrama(ctx context.Context, dramaID int64) ([]*model.Episode, error) {
     rows, err := r.pool.Query(ctx, `
         SELECT id, drama_id, episode_no, title, duration, video_url, status, created_at, updated_at
-        FROM episodes WHERE drama_id=$1 AND status='ready' ORDER BY episode_no ASC`, dramaID)
+        FROM episodes WHERE drama_id=$1 AND status IN ('ready','processing') ORDER BY episode_no ASC`, dramaID)
     if err != nil {
         return nil, err
     }

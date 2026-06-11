@@ -29,7 +29,7 @@ export function CommentItem({
   const t = useTranslations("comment");
   const user = useAuthStore((s) => s.user);
   const [showReply, setShowReply] = useState(false);
-  const isOwner = user?.id === comment.user.id;
+  const isOwner = user?.id === comment.user?.id;
 
   // Find child comments (replies)
   const hasReplies = false; // Simplified — real API would have `replies` field
@@ -44,14 +44,14 @@ export function CommentItem({
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
-          {comment.user.nickname.charAt(0)}
+          {comment.user?.nickname?.charAt(0) ?? '?'}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">
-              {comment.user.nickname}
+              {comment.user?.nickname ?? 'Anonymous'}
             </span>
             <span className="text-xs text-muted-foreground">
               {timeAgo(comment.created_at)}
@@ -99,7 +99,7 @@ export function CommentItem({
                   setShowReply(false);
                 }}
                 isSubmitting={isAddingReply}
-                replyTo={comment.user.nickname}
+                replyTo={comment.user?.nickname ?? 'Anonymous'}
                 onCancelReply={() => setShowReply(false)}
               />
             </div>

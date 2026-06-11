@@ -20,6 +20,12 @@ services:
       - VIDEO_SVC_ADDR=video-service:8080
       - PAYMENT_SVC_ADDR=payment-service:8080
       - REDIS_ADDR=redis:6379
+      - JWT_SECRET=dev-secret-change-in-production
+      - JWT_ACCESS_TTL=86400
+      - S3_ENDPOINT=minio:9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - INTERNAL_API_KEY=dev-internal-key
       - GOWORK=off
     depends_on:
       redis:
@@ -46,7 +52,9 @@ services:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
       - JWT_SECRET=dev-secret-change-in-production
+      - JWT_ACCESS_TTL=86400
       - GOOGLE_CLIENT_ID=
+      - GOOGLE_CLIENT_SECRET=
       - APPLE_CLIENT_ID=
       - FACEBOOK_CLIENT_ID=
       - GOWORK=off
@@ -91,7 +99,10 @@ services:
   # Video Management Service (Go)
   # ==========================================
   video-service:
-    image: golang:alpine
+    build:
+      context: ../backend/services/video
+      dockerfile: Dockerfile
+    image: aishot-video:local
     container_name: aishot-video
     working_dir: /app/services/video
     volumes:
@@ -106,7 +117,7 @@ services:
       - S3_ACCESS_KEY=minioadmin
       - S3_SECRET_KEY=minioadmin
       - S3_BUCKET=aishot-videos
-      - CDN_URL=http://localhost:8080
+      - CDN_URL=http://localhost:8080/files
       - GOWORK=off
     depends_on:
       postgres:
@@ -137,6 +148,7 @@ services:
       - PAYPAL_CLIENT_ID=
       - PAYPAL_CLIENT_SECRET=
       - STRIPE_API_KEY=
+      - STRIPE_WEBHOOK_SECRET=
       - GOWORK=off
     depends_on:
       postgres:
@@ -160,7 +172,7 @@ services:
       - "3000:3000"
     command: sh -c "npm install && npm run dev"
     environment:
-      - API_GATEWAY=http://api-gateway:8080
+      - API_GATEWAY=api-gateway:8080
       - NODE_ENV=development
     depends_on:
       - api-gateway
@@ -172,20 +184,27 @@ services:
   # Python AI Services
   # ==========================================
   ai-worker:
-    image: python:3.12-slim
+    build:
+      context: ../ai
+      dockerfile: Dockerfile
+    image: aishot-ai-worker:local
     container_name: aishot-ai-worker
     working_dir: /app
     volumes:
       - ../ai:/app
-    command: sh -c "pip install -r requirements.txt && python worker.py"
+    command: python worker.py
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
       - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
-      - OPENAI_API_KEY=
-      - DEEPL_API_KEY=
+      - OPENAI_API_KEY=ollama
+      - LLM_BASE_URL=http://localhost:11434/v1
+      - LLM_MODEL=qwen3:4b
       - ELEVENLABS_API_KEY=
       - WHISPER_MODEL=base
+      - WHISPER_DEVICE=cpu
+      - API_GATEWAY_URL=http://api-gateway:8080
+      - INTERNAL_API_KEY=dev-internal-key
     depends_on:
       postgres:
         condition: service_healthy
@@ -196,17 +215,6 @@ services:
     networks:
       - aishot-net
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
-  # ==========================================
-  # Infrastructure
-  # ==========================================
 
   # PostgreSQL
   postgres:

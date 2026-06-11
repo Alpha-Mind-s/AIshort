@@ -33,7 +33,12 @@ func (h *CommentHandler) Create(c *gin.Context) {
         return
     }
 
-    userID := c.GetInt64("user_id")
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
     comment, err := h.svc.Create(c.Request.Context(), userID, dramaID, &req)
     if err != nil {
         response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
@@ -75,7 +80,12 @@ func (h *CommentHandler) Delete(c *gin.Context) {
         return
     }
 
-    userID := c.GetInt64("user_id")
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
     if err := h.svc.Delete(c.Request.Context(), id, userID); err != nil {
         if appErr := pkgErr.AsAppError(err); appErr != nil {
             response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
@@ -86,4 +96,32 @@ func (h *CommentHandler) Delete(c *gin.Context) {
     }
 
     c.Status(http.StatusNoContent)
+}
+
+// Like toggles a like on a comment (like if not liked, unlike if already liked).
+// Expects X-User-ID header set by the gateway's ForwardUserContext middleware.
+func (h *CommentHandler) Like(c *gin.Context) {
+    commentID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+    if err != nil {
+        response.Error(c, http.StatusBadRequest, pkgErr.ErrBadRequest.Code, "invalid comment id")
+        return
+    }
+
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
+    result, err := h.svc.ToggleLike(c.Request.Context(), userID, commentID)
+    if err != nil {
+        if appErr := pkgErr.AsAppError(err); appErr != nil {
+            response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
+        } else {
+            response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
+        }
+        return
+    }
+
+    response.OK(c, result)
 }

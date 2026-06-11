@@ -28,6 +28,7 @@ func SetupRouter(pool *pgxpool.Pool) *gin.Engine {
 		api.GET("/dramas/:id", dramaHandler.Detail)
 		api.GET("/dramas/:id/episodes", episodeHandler.ListByDrama)
 		api.GET("/episodes/:id", episodeHandler.Detail)
+		api.GET("/episodes/:id/play", episodeHandler.Play)
 		api.GET("/categories", categoryHandler.List)
 
 		// Write

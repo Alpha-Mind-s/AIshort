@@ -70,8 +70,8 @@ class ASRProcessor:
                 "duration": 120.5
             }
         """
-        media_url = msg["input"].get("video_url") or msg["input"].get("audio_url")
-        source_lang = msg["input"].get("source_lang", "zh")
+        media_url = msg.get("input", {}).get("video_url") or msg.get("input", {}).get("audio_url")
+        source_lang = msg.get("input", {}).get("source_lang", "zh")
         episode_id = msg.get("episode_id")
 
         if not media_url:

@@ -57,9 +57,10 @@ Rules:
                 "target_lang": "en"
             }
         """
-        source_lang = msg["input"].get("source_lang", "zh")
-        target_lang = msg["input"].get("target_lang", "en")
-        segments = msg["input"].get("segments", [])
+        input_data = msg.get("input", {})
+        source_lang = input_data.get("source_lang", "zh")
+        target_lang = input_data.get("target_lang", "en")
+        segments = input_data.get("segments", [])
         episode_id = msg.get("episode_id")
 
         target_lang_name = self._lang_name(target_lang)

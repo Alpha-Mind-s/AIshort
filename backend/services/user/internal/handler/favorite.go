@@ -27,7 +27,12 @@ func (h *FavoriteHandler) Add(c *gin.Context) {
         return
     }
 
-    userID := c.GetInt64("user_id")
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
     if err := h.svc.Add(c.Request.Context(), userID, req.DramaID); err != nil {
         if appErr := pkgErr.AsAppError(err); appErr != nil {
             response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
@@ -41,7 +46,12 @@ func (h *FavoriteHandler) Add(c *gin.Context) {
 }
 
 func (h *FavoriteHandler) List(c *gin.Context) {
-    userID := c.GetInt64("user_id")
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
     page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
     pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
     page, pageSize = response.NormalizePage(page, pageSize)
@@ -66,7 +76,12 @@ func (h *FavoriteHandler) Delete(c *gin.Context) {
         return
     }
 
-    userID := c.GetInt64("user_id")
+    userID, err := parseUserID(c)
+    if err != nil {
+        response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+        return
+    }
+
     if err := h.svc.Remove(c.Request.Context(), id, userID); err != nil {
         response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
         return

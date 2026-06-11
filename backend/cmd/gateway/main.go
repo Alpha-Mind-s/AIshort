@@ -3,6 +3,9 @@ package main
 import (
     "context"
 
+    "github.com/minio/minio-go/v7"
+    "github.com/minio/minio-go/v7/pkg/credentials"
+
     "github.com/ai-shot/pkg/logger"
     "github.com/ai-shot/pkg/redis"
 )
@@ -20,7 +23,16 @@ func main() {
     defer rdb.Close()
     logger.Info().Msg("redis connected")
 
-    router := SetupRouter(rdb, cfg)
+    minioClient, err := minio.New(cfg.MinIO.Endpoint, &minio.Options{
+        Creds:  credentials.NewStaticV4(cfg.MinIO.AccessKey, cfg.MinIO.SecretKey, ""),
+        Secure: false,
+    })
+    if err != nil {
+        logger.Fatal().Err(err).Msg("failed to create minio client")
+    }
+    logger.Info().Msg("minio client created")
+
+    router := SetupRouter(rdb, minioClient, cfg)
 
     logger.Info().Str("addr", cfg.Server.Addr).Msg("starting gateway")
     if err := router.Run(cfg.Server.Addr); err != nil {

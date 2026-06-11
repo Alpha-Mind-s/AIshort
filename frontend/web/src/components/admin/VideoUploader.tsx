@@ -15,6 +15,7 @@ type UploadPhase = "idle" | "selecting" | "uploading" | "done" | "error";
 
 export function VideoUploader({ value, onChange }: VideoUploaderProps) {
   const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const inputRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<UploadPhase>(value ? "done" : "idle");
   const [progress, setProgress] = useState(0);
@@ -54,21 +55,38 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
       setProgress(0);
 
       try {
-        // 1. Get upload URL
+        // 1. Get presigned upload URL from backend
         const uploadInfo = await getUploadUrl({
           filename: file.name,
           file_size: file.size,
           content_type: file.type,
         });
 
-        // 2. Simulate chunked upload with progress
-        const chunks = 10;
-        for (let i = 1; i <= chunks; i++) {
-          await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
-          setProgress(Math.round((i / chunks) * 100));
-        }
+        // 2. Real XHR upload to MinIO via presigned URL with progress tracking
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadInfo.upload_url);
+          xhr.setRequestHeader("Content-Type", file.type);
 
-        // 3. Complete upload
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Network error during upload"));
+          xhr.send(file);
+        });
+
+        // 3. Complete upload — notify backend to process the video
         const result = await completeUpload({
           upload_id: uploadInfo.upload_id,
         });
@@ -200,7 +218,7 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
           }}
           className="text-xs text-primary hover:opacity-80 transition-opacity"
         >
-          {t("retry")}
+          {tc("retry")}
         </button>
       </div>
     );

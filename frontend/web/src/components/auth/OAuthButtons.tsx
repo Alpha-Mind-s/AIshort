@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import type { OAuthProvider } from "@/lib/api/auth";
 
 const OAUTH_ICONS: Record<OAuthProvider, string> = {
@@ -13,11 +14,9 @@ export function OAuthButtons() {
   const t = useTranslations("auth");
 
   const handleOAuth = (provider: OAuthProvider) => {
-    // In mock mode, simulate OAuth redirect and callback
-    // Redirect to the OAuth endpoint which will 302
-    // For mock: we'll handle via a simple redirect to oauth-callback with mock code
-    const callbackUrl = `/oauth-callback?provider=${provider}&code=mock-oauth-code`;
-    window.location.href = callbackUrl;
+    // OAuth is not yet implemented on the backend — show a toast instead
+    // of redirecting to a callback page that will fail.
+    toast.info(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login is coming soon. Please use email login.`);
   };
 
   const providers: OAuthProvider[] = ["google", "apple", "facebook"];

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { EpisodeForm, type EpisodeFormValues } from '@/components/EpisodeForm'
+import { apiFetch } from '@/lib/api-client'
 import { ArrowLeft } from 'lucide-react'
 
 export default function EpisodeCreatePage() {
@@ -11,12 +12,12 @@ export default function EpisodeCreatePage() {
   const [error, setError] = useState('')
   const [nextEpisodeNo, setNextEpisodeNo] = useState(1)
   const [dramaTitle, setDramaTitle] = useState('')
+  const uploadIdRef = useRef<string>('')
 
   useEffect(() => {
     if (!dramaId) return
     // Fetch existing episodes to determine next episode number
-    fetch(`http://localhost:8080/api/v1/dramas/${dramaId}`)
-      .then((r) => r.json())
+    apiFetch<{ title: string; total_episodes: number }>(`/dramas/${dramaId}`)
       .then((j) => {
         if (j.code === 0) {
           setDramaTitle(j.data.title)
@@ -31,13 +32,19 @@ export default function EpisodeCreatePage() {
     setIsSubmitting(true)
     setError('')
     try {
-      const res = await fetch(`http://localhost:8080/api/v1/dramas/${dramaId}/episodes`, {
+      const res = await apiFetch<{ id: number }>(`/dramas/${dramaId}/episodes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      const json = await res.json()
-      if (json.code !== 0) throw new Error(json.message || 'Failed to add episode')
+
+      // Complete the upload, linking video to the new episode
+      const episodeId = res.data.id
+      if (uploadIdRef.current) {
+        await apiFetch('/videos/upload/complete', {
+          method: 'POST',
+          body: JSON.stringify({ upload_id: uploadIdRef.current, episode_id: episodeId }),
+        })
+      }
 
       navigate(`/dramas/${dramaId}`, { replace: true })
     } catch (e) {
@@ -70,6 +77,7 @@ export default function EpisodeCreatePage() {
         <EpisodeForm
           nextEpisodeNo={nextEpisodeNo}
           onSubmit={handleSubmit}
+          onUploadId={(id) => { uploadIdRef.current = id }}
           isSubmitting={isSubmitting}
         />
       </main>

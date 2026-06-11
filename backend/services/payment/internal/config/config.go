@@ -10,11 +10,17 @@ type Config struct {
 	Server config.ServerConfig
 	DB     config.DatabaseConfig
 	PayPal PayPalConfig
+	Stripe StripeConfig
 }
 
 type PayPalConfig struct {
 	ClientID     string
 	ClientSecret string
+}
+
+type StripeConfig struct {
+	APIKey        string
+	WebhookSecret string
 }
 
 func Load() *Config {
@@ -23,5 +29,14 @@ func Load() *Config {
 	cfg.DB.Load("DB")
 	cfg.PayPal.ClientID = os.Getenv("PAYPAL_CLIENT_ID")
 	cfg.PayPal.ClientSecret = os.Getenv("PAYPAL_CLIENT_SECRET")
+	cfg.Stripe.APIKey = getEnv("STRIPE_API_KEY", "")
+	cfg.Stripe.WebhookSecret = getEnv("STRIPE_WEBHOOK_SECRET", "")
 	return cfg
+}
+
+func getEnv(key, defaultVal string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return defaultVal
 }

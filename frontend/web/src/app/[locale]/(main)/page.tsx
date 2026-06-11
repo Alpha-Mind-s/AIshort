@@ -1,30 +1,39 @@
 import { getTranslations } from "next-intl/server";
-import { serverGetDramaList } from "@/lib/mocks/data-access";
+import type { Drama, PaginatedMeta, Category } from "@/lib/api/drama";
 import { DramaGrid } from "@/components/drama/DramaGrid";
 import { HeroBanner } from "@/components/drama/HeroBanner";
 import { HomePageClient } from "./HomePageClient";
 
-// Static data from mock (categories are not an API endpoint yet, so we hardcode)
-const CATEGORIES = [
-  { id: 1, name: "Romance", slug: "romance" },
-  { id: 2, name: "Action", slug: "action" },
-  { id: 3, name: "Comedy", slug: "comedy" },
-  { id: 4, name: "Thriller", slug: "thriller" },
-  { id: 5, name: "Fantasy", slug: "fantasy" },
-];
+const API_BASE = process.env.API_GATEWAY
+  ? `http://${process.env.API_GATEWAY}/api/v1`
+  : process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 
-export type HomePageData = {
-  trending: { data: Drama[]; meta: PaginatedMeta };
-  latest: { data: Drama[]; meta: PaginatedMeta };
-};
+async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_BASE}/categories`, { next: { revalidate: 300 } });
+  if (!res.ok) return [];
+  const json = await res.json();
+  return json.code === 0 ? (json.data ?? []) : [];
+}
+
+async function fetchDramaList(
+  sort: "trending" | "latest" | "popular",
+  pageSize = 12
+): Promise<{ data: Drama[]; meta: PaginatedMeta }> {
+  const url = `${API_BASE}/dramas?sort=${sort}&page_size=${pageSize}`;
+  const res = await fetch(url, { next: { revalidate: 60 } });
+  if (!res.ok) return { data: [], meta: { page: 1, page_size: pageSize, total: 0 } };
+  const json = await res.json();
+  return { data: json.data ?? [], meta: json.meta };
+}
 
 export default async function HomePage() {
   const t = await getTranslations("home");
 
-  // Fetch trending and latest dramas in parallel (BFF pattern)
-  const [trending, latest] = await Promise.all([
-    serverGetDramaList({ sort: "trending", page_size: 12 }),
-    serverGetDramaList({ sort: "latest", page_size: 12 }),
+  // Fetch trending, latest dramas and categories in parallel from real API
+  const [trending, latest, categories] = await Promise.all([
+    fetchDramaList("trending"),
+    fetchDramaList("latest"),
+    fetchCategories(),
   ]);
 
   const heroDrama = trending.data[0];
@@ -49,7 +58,7 @@ export default async function HomePage() {
       </div>
 
       {/* Client-only interactive filter section */}
-      <HomePageClient categories={CATEGORIES} />
+      <HomePageClient categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))} />
     </div>
   );
 }

@@ -57,6 +57,14 @@ export interface VideoQuality {
   bitrate: number;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  parent_id: number | null;
+  sort_order: number;
+}
+
 export interface EpisodePlayInfo {
   episode: Episode;
   play_url: string;
@@ -125,6 +133,11 @@ export async function getEpisodePlay(
   const res = await apiFetch<EpisodePlayInfo>(
     `/episodes/${id}/play?${searchParams.toString()}`
   );
+  return res.data;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const res = await apiFetch<Category[]>("/categories");
   return res.data;
 }
 

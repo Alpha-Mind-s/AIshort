@@ -22,9 +22,21 @@ class LipSyncProcessor:
     # Wav2Lip checkpoint 路径（需预先下载）
     WAV2LIP_CHECKPOINT = "/models/wav2lip_gan.pth"
     GFPGAN_CHECKPOINT = "/models/GFPGANv1.4.pth"
+    WAV2LIP_SCRIPT = "Wav2Lip/inference.py"
 
     def __init__(self):
         pass
+
+    def is_available(self) -> bool:
+        """检查 Wav2Lip 模型文件和推理脚本是否可用。"""
+        import os
+        if not os.path.isfile(self.WAV2LIP_SCRIPT):
+            logger.debug("Wav2Lip 脚本不存在: {}", self.WAV2LIP_SCRIPT)
+            return False
+        if not os.path.isfile(self.WAV2LIP_CHECKPOINT):
+            logger.debug("Wav2Lip 模型不存在: {}", self.WAV2LIP_CHECKPOINT)
+            return False
+        return True
 
     # ------------------------------------------------------------------
     # 核心处理
@@ -42,19 +54,25 @@ class LipSyncProcessor:
         返回:
             {
                 "lip_sync_url": "s3://.../lipsync.mp4",
-                "status": "completed"
+                "status": "completed" | "skipped"
             }
         """
-        video_url = msg["input"].get("video_url", "")
-        dub_url = msg["input"].get("dub_url", "")
-        target_lang = msg["input"].get("target_lang", "en")
+        input_data = msg.get("input", {})
+        video_url = input_data.get("video_url", "")
+        dub_url = input_data.get("dub_url", "")
+        target_lang = input_data.get("target_lang", "en")
         episode_id = msg.get("episode_id")
 
         logger.info("口型同步开始 episode={} lang={}", episode_id, target_lang)
 
         if not video_url or not dub_url:
-            logger.error("缺少视频或配音音频 URL")
-            return {"lip_sync_url": "", "status": "failed"}
+            logger.warning("缺少视频或配音音频 URL — 跳过口型同步")
+            return {"lip_sync_url": "", "status": "skipped"}
+
+        # Check availability at runtime (should have been checked at init, but be safe)
+        if not self.is_available():
+            logger.warning("Wav2Lip 不可用 — 跳过口型同步")
+            return {"lip_sync_url": "", "status": "skipped"}
 
         # Step 1: 下载视频和音频
         video_path = self._download_file(video_url, "video")

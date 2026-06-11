@@ -36,7 +36,7 @@ export function EpisodeList({ episodes, dramaId }: EpisodeListProps) {
                 <Clock className="h-3 w-3" />
                 {formatDuration(ep.duration)}
               </span>
-              {ep.localizations.length > 0 && (
+              {ep.localizations?.length > 0 && (
                 <span>{ep.localizations.length} languages</span>
               )}
             </div>

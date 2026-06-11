@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -81,4 +82,21 @@ func (h *UploadHandler) CompleteUpload(c *gin.Context) {
 	}
 
 	response.OK(c, resp)
+}
+
+// GetTasks returns AI processing tasks for a given episode/video ID.
+func (h *UploadHandler) GetTasks(c *gin.Context) {
+	episodeID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, pkgErr.ErrBadRequest.Code, "invalid episode id")
+		return
+	}
+
+	tasks, err := h.repo.GetTasks(c.Request.Context(), episodeID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
+		return
+	}
+
+	response.OK(c, tasks)
 }

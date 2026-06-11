@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodResolver } from "@/lib/auth/schemas";
 import { CoverUploader } from "./CoverUploader";
-import { mockCategories } from "@/lib/mocks/data/dramas";
+import { getCategories } from "@/lib/api/drama";
 import { X } from "lucide-react";
 import type { Drama } from "@/lib/api/drama";
 
@@ -53,6 +54,11 @@ export function DramaForm({
       status: "draft",
       ...defaultValues,
     },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
   });
 
   const tags = watch("tags");
@@ -122,7 +128,7 @@ export function DramaForm({
           {...register("category_id", { valueAsNumber: true })}
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         >
-          {mockCategories.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>

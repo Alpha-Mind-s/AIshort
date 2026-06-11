@@ -10,6 +10,7 @@ import (
 
 	"github.com/ai-shot/pkg/database"
 	"github.com/ai-shot/pkg/logger"
+	pkgredis "github.com/ai-shot/pkg/redis"
 	"github.com/ai-shot/video-svc/internal"
 	"github.com/ai-shot/video-svc/internal/config"
 )
@@ -27,7 +28,14 @@ func main() {
 	defer pool.Close()
 	logger.Info().Msg("database connected")
 
-	router, err := internal.SetupRouter(pool,
+	rdb, err := pkgredis.NewClient(ctx, cfg.Redis.Addr)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to connect to redis")
+	}
+	defer rdb.Close()
+	logger.Info().Msg("redis connected")
+
+	router, err := internal.SetupRouter(pool, rdb,
 		cfg.S3.Endpoint, cfg.S3.AccessKey, cfg.S3.SecretKey,
 		cfg.S3.Bucket, cfg.S3.CDNURL, cfg.S3.UseSSL)
 	if err != nil {

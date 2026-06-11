@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStudioAuth } from '@/stores/auth-store'
+import { apiFetch } from '@/lib/api-client'
 import { Plus, Film, Search, LogOut, Edit, Trash2 } from 'lucide-react'
 
 interface Drama {
@@ -22,9 +23,8 @@ export default function DashboardPage() {
 
   const fetchDramas = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/v1/dramas?page_size=100')
-      const json = await res.json()
-      if (json.code === 0) setDramas(json.data)
+      const res = await apiFetch<Drama[]>('/dramas?page_size=100')
+      setDramas(res.data || [])
     } catch (e) {
       console.error('Failed to fetch dramas', e)
     } finally {
@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this drama and all its episodes?')) return
-    await fetch(`http://localhost:8080/api/v1/dramas/${id}`, { method: 'DELETE' })
+    await apiFetch(`/dramas/${id}`, { method: 'DELETE' })
     setDramas((prev) => prev.filter((d) => d.id !== id))
   }
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-xl font-bold">Dramas</h1>
-            <p className="text-sm text-gray-400 mt-1">{dramas.length} total</p>
+            <p className="text-sm text-gray-400 mt-1">{dramas?.length || 0} total</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">

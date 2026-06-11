@@ -26,8 +26,11 @@ func SetupRouter(pool *pgxpool.Pool, rdb *redis.Client, cfg config.JWTConfig) *g
     favSvc := svc.NewFavoriteService(favoriteRepo)
     favHandler := handler.NewFavoriteHandler(favSvc)
 
-    commentSvc := svc.NewCommentService(commentRepo)
+    commentSvc := svc.NewCommentService(commentRepo, userRepo)
     commentHandler := handler.NewCommentHandler(commentSvc)
+
+    userHandler := handler.NewUserHandler(userRepo)
+    oauthHandler := handler.NewOAuthHandler(authSvc)
 
     api := r.Group("/api/v1")
     {
@@ -37,6 +40,17 @@ func SetupRouter(pool *pgxpool.Pool, rdb *redis.Client, cfg config.JWTConfig) *g
             auth.POST("/login", authHandler.Login)
             auth.POST("/refresh", authHandler.RefreshToken)
             auth.POST("/logout", authHandler.Logout)
+
+            // OAuth routes — gateway proxies here
+            auth.GET("/oauth/:provider", oauthHandler.Redirect)
+            auth.POST("/oauth/:provider/callback", oauthHandler.Callback)
+        }
+
+        // User profile (auth handled by gateway via ForwardUserContext)
+        user := api.Group("/users")
+        {
+            user.GET("/me", userHandler.GetProfile)
+            user.PUT("/me", userHandler.UpdateProfile)
         }
 
         fav := api.Group("/favorites")
@@ -49,6 +63,7 @@ func SetupRouter(pool *pgxpool.Pool, rdb *redis.Client, cfg config.JWTConfig) *g
         api.POST("/dramas/:id/comments", commentHandler.Create)
         api.GET("/dramas/:id/comments", commentHandler.List)
         api.DELETE("/comments/:id", commentHandler.Delete)
+        api.POST("/comments/:id/like", commentHandler.Like)
     }
 
     return r

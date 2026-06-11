@@ -1,11 +1,30 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import { serverGetDramaDetail, serverGetDramaEpisodes } from "@/lib/mocks/data-access";
+import type { Drama, Episode } from "@/lib/api/drama";
 import { EpisodeList } from "@/components/drama/EpisodeList";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { CommentSection } from "@/components/comment/CommentSection";
 import { formatDate, formatCount } from "@/lib/utils/format";
+import { getImageUrl } from "@/lib/utils/image-url";
 import { notFound } from "next/navigation";
+
+const API_BASE = process.env.API_GATEWAY
+  ? `http://${process.env.API_GATEWAY}/api/v1`
+  : process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
+async function fetchDrama(id: number): Promise<Drama | null> {
+  const res = await fetch(`${API_BASE}/dramas/${id}`, { next: { revalidate: 60 } });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.code === 0 ? json.data : null;
+}
+
+async function fetchEpisodes(id: number): Promise<Episode[]> {
+  const res = await fetch(`${API_BASE}/dramas/${id}/episodes`, { next: { revalidate: 60 } });
+  if (!res.ok) return [];
+  const json = await res.json();
+  return json.code === 0 ? (json.data ?? []) : [];
+}
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -15,10 +34,10 @@ export default async function DramaDetailPage({ params }: Props) {
   const { id } = await params;
   const t = await getTranslations("drama");
 
-  // BFF: fetch drama detail + episodes in parallel
+  // BFF: fetch drama detail + episodes in parallel from real API
   const [drama, episodes] = await Promise.all([
-    serverGetDramaDetail(Number(id)),
-    serverGetDramaEpisodes(Number(id)),
+    fetchDrama(Number(id)),
+    fetchEpisodes(Number(id)),
   ]);
 
   if (!drama) {
@@ -31,7 +50,7 @@ export default async function DramaDetailPage({ params }: Props) {
       <div className="relative h-48 md:h-64 bg-muted">
         {drama.cover_url && (
           <Image
-            src={drama.cover_url}
+            src={getImageUrl(drama.cover_url)}
             alt={drama.title}
             fill
             sizes="100vw"
@@ -47,7 +66,7 @@ export default async function DramaDetailPage({ params }: Props) {
           {/* Cover poster */}
           <div className="flex-shrink-0 relative w-36 h-48 md:w-44 md:h-60 rounded-lg overflow-hidden shadow-xl border-2 border-background">
             <Image
-              src={drama.cover_url}
+              src={getImageUrl(drama.cover_url)}
               alt={drama.title}
               fill
               sizes="(max-width: 768px) 144px, 176px"

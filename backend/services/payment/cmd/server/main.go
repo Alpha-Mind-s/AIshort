@@ -27,7 +27,7 @@ func main() {
 	defer pool.Close()
 	logger.Info().Msg("database connected")
 
-	router := internal.SetupRouter(pool)
+	router := internal.SetupRouter(pool, cfg.Stripe.APIKey, cfg.Stripe.WebhookSecret)
 
 	srv := &http.Server{
 		Addr:    cfg.Server.Addr,

@@ -12,6 +12,7 @@ type GatewayConfig struct {
     Redis          config.RedisConfig
     JWT            config.JWTConfig
     Services       ServiceConfig
+    MinIO          MinIOConfig
     InternalApiKey string
 }
 
@@ -20,6 +21,12 @@ type ServiceConfig struct {
     ContentSvcAddr string
     VideoSvcAddr   string
     PaymentSvcAddr string
+}
+
+type MinIOConfig struct {
+    Endpoint  string
+    AccessKey string
+    SecretKey string
 }
 
 func LoadConfig() *GatewayConfig {
@@ -32,6 +39,11 @@ func LoadConfig() *GatewayConfig {
         ContentSvcAddr: getEnv("CONTENT_SVC_ADDR", "localhost:8082"),
         VideoSvcAddr:   getEnv("VIDEO_SVC_ADDR", "localhost:8083"),
         PaymentSvcAddr: getEnv("PAYMENT_SVC_ADDR", "localhost:8084"),
+    }
+    cfg.MinIO = MinIOConfig{
+        Endpoint:  getEnv("S3_ENDPOINT", "minio:9000"),
+        AccessKey: getEnv("S3_ACCESS_KEY", "minioadmin"),
+        SecretKey: getEnv("S3_SECRET_KEY", "minioadmin"),
     }
     cfg.InternalApiKey = getEnv("INTERNAL_API_KEY", "dev-internal-key")
     return cfg

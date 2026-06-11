@@ -48,6 +48,7 @@ export async function cancelSubscription(): Promise<void> {
 }
 
 export async function getSubscriptionStatus(): Promise<Subscription | null> {
-  const res = await apiFetch<Subscription>("/subscriptions/status");
+  const res = await apiFetch<Subscription | null>("/subscriptions/status");
+  // API returns `data: null` when no active subscription (HTTP 200)
   return res.data ?? null;
 }
