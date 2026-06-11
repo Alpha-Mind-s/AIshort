@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/hooks";
 
 export function RegisterForm() {
   const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const { register: registerUser, isRegistering } = useAuth();
 
   const {
@@ -84,7 +85,7 @@ export function RegisterForm() {
         disabled={isRegistering}
         className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
       >
-        {isRegistering ? t("common.loading") : t("submit_register")}
+        {isRegistering ? tc("loading") : t("submit_register")}
       </button>
     </form>
   );
