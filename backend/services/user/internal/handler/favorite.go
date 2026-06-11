@@ -29,8 +29,7 @@ func (h *FavoriteHandler) Add(c *gin.Context) {
 
     userID := c.GetInt64("user_id")
     if err := h.svc.Add(c.Request.Context(), userID, req.DramaID); err != nil {
-        appErr, ok := err.(*pkgErr.AppError)
-        if ok {
+        if appErr := pkgErr.AsAppError(err); appErr != nil {
             response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
         } else {
             response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
@@ -45,6 +44,7 @@ func (h *FavoriteHandler) List(c *gin.Context) {
     userID := c.GetInt64("user_id")
     page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
     pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+    page, pageSize = response.NormalizePage(page, pageSize)
 
     favorites, total, err := h.svc.List(c.Request.Context(), userID, page, pageSize)
     if err != nil {

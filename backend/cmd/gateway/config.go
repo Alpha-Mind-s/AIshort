@@ -2,6 +2,7 @@ package main
 
 import (
     "os"
+    "strings"
 
     "github.com/ai-shot/pkg/config"
 )
@@ -32,6 +33,14 @@ func LoadConfig() *GatewayConfig {
         PaymentSvcAddr: getEnv("PAYMENT_SVC_ADDR", "localhost:8084"),
     }
     return cfg
+}
+
+func (c *GatewayConfig) AllowedOrigins() []string {
+    origins := getEnv("CORS_ORIGINS", "*")
+    if origins == "*" {
+        return nil
+    }
+    return strings.Split(origins, ",")
 }
 
 func getEnv(key, defaultVal string) string {

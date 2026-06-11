@@ -34,8 +34,7 @@ func (h *SubscriptionHandler) Create(c *gin.Context) {
 	userID := c.GetInt64("user_id")
 	resp, err := h.svc.Create(c.Request.Context(), userID, &req)
 	if err != nil {
-		appErr, ok := err.(*pkgErr.AppError)
-		if ok {
+		if appErr := pkgErr.AsAppError(err); appErr != nil {
 			response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
 		} else {
 			response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)

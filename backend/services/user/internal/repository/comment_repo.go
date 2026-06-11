@@ -23,15 +23,22 @@ func (r *CommentRepository) Create(ctx context.Context, comment *model.Comment) 
     return err
 }
 
+func validSortOrder(sort string, allowed map[string]string) string {
+    if order, ok := allowed[sort]; ok {
+        return order
+    }
+    return allowed["latest"]
+}
+
 func (r *CommentRepository) FindByDrama(ctx context.Context, dramaID int64, sort string, page, pageSize int) ([]*model.Comment, int, error) {
     var total int
     r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM comments WHERE drama_id=$1 AND status='active'", dramaID).Scan(&total)
 
     offset := (page - 1) * pageSize
-    orderBy := "created_at DESC"
-    if sort == "hottest" {
-        orderBy = "likes_count DESC, created_at DESC"
-    }
+    orderBy := validSortOrder(sort, map[string]string{
+        "latest": "created_at DESC",
+        "hottest": "likes_count DESC, created_at DESC",
+    })
 
     query := `SELECT id, user_id, drama_id, parent_id, content, likes_count, created_at, updated_at
               FROM comments WHERE drama_id=$1 AND status='active' ORDER BY ` + orderBy + ` LIMIT $2 OFFSET $3`

@@ -1,6 +1,9 @@
 package errors
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 type AppError struct {
 	Code       int    `json:"code"`
@@ -10,6 +13,15 @@ type AppError struct {
 
 func (e *AppError) Error() string {
 	return e.Message
+}
+
+// AsAppError unwraps an error chain to find an *AppError, returning nil if not found.
+func AsAppError(err error) *AppError {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr
+	}
+	return nil
 }
 
 // 通用错误

@@ -16,6 +16,17 @@ func NewDramaRepository(pool *pgxpool.Pool) *DramaRepository {
     return &DramaRepository{pool: pool}
 }
 
+func validDramaSortOrder(sort string) string {
+    switch sort {
+    case "popular":
+        return "d.id DESC"
+    case "trending":
+        return "d.release_at DESC NULLS LAST"
+    default:
+        return "d.release_at DESC NULLS LAST"
+    }
+}
+
 func (r *DramaRepository) FindAll(ctx context.Context, categoryID *int, sort, keyword string, page, pageSize int) ([]*model.Drama, int, error) {
     where := "WHERE d.status='published'"
     args := []interface{}{}
@@ -37,13 +48,7 @@ func (r *DramaRepository) FindAll(ctx context.Context, categoryID *int, sort, ke
     countQuery := "SELECT COUNT(*) FROM dramas d " + where
     r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
 
-    orderBy := "d.release_at DESC NULLS LAST"
-    switch sort {
-    case "popular":
-        orderBy = "d.id DESC"
-    case "trending":
-        orderBy = "d.release_at DESC NULLS LAST"
-    }
+    orderBy := validDramaSortOrder(sort)
 
     offset := (page - 1) * pageSize
     query := fmt.Sprintf(`
@@ -65,9 +70,6 @@ func (r *DramaRepository) FindAll(ctx context.Context, categoryID *int, sort, ke
             &d.CreatorID, &d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt); err != nil {
             return nil, 0, err
         }
-        d.ViewCount = 0
-        d.LikeCount = 0
-        d.FavoriteCount = 0
         dramas = append(dramas, d)
     }
     return dramas, total, nil

@@ -28,8 +28,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	tokens, err := h.authSvc.Register(c.Request.Context(), &req)
 	if err != nil {
-		appErr, ok := err.(*pkgErr.AppError)
-		if ok {
+		if appErr := pkgErr.AsAppError(err); appErr != nil {
 			response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
 		} else {
 			response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
@@ -49,8 +48,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	tokens, err := h.authSvc.Login(c.Request.Context(), &req)
 	if err != nil {
-		appErr, ok := err.(*pkgErr.AppError)
-		if ok {
+		if appErr := pkgErr.AsAppError(err); appErr != nil {
 			response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
 		} else {
 			response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
@@ -71,8 +69,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	userID := c.GetInt64("user_id")
 	tokens, err := h.authSvc.RefreshToken(c.Request.Context(), userID, req.RefreshToken)
 	if err != nil {
-		appErr, ok := err.(*pkgErr.AppError)
-		if ok {
+		if appErr := pkgErr.AsAppError(err); appErr != nil {
 			response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)
 		} else {
 			response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)

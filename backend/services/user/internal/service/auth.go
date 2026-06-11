@@ -29,7 +29,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return nil, pkgErr.ErrEmailExists
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 	if err != nil {
 		return nil, pkgErr.ErrInternal
 	}

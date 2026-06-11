@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ai-shot/pkg/database"
 	"github.com/ai-shot/pkg/logger"
@@ -27,15 +29,31 @@ func main() {
 
 	router := internal.SetupRouter(pool)
 
+	srv := &http.Server{
+		Addr:    cfg.Server.Addr,
+		Handler: router,
+	}
+
 	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-		logger.Info().Msg("shutting down payment service...")
+		logger.Info().Str("addr", cfg.Server.Addr).Msg("starting payment service")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal().Err(err).Msg("server failed")
+		}
 	}()
 
-	logger.Info().Str("addr", cfg.Server.Addr).Msg("starting payment service")
-	if err := router.Run(cfg.Server.Addr); err != nil {
-		logger.Fatal().Err(err).Msg("server failed")
+	quit := make(chan struct{})
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		logger.Info().Msg("shutting down payment service...")
+		close(quit)
+	}()
+	<-quit
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Fatal().Err(err).Msg("server shutdown failed")
 	}
 }

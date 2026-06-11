@@ -21,6 +21,7 @@ func NewDramaHandler(repo *repository.DramaRepository) *DramaHandler {
 func (h *DramaHandler) List(c *gin.Context) {
     page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
     pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+    page, pageSize = response.NormalizePage(page, pageSize)
     sort := c.DefaultQuery("sort", "latest")
     keyword := c.Query("keyword")
 

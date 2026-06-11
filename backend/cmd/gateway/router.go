@@ -16,7 +16,7 @@ import (
 func SetupRouter(rdb *redis.Client, cfg *GatewayConfig) *gin.Engine {
     r := gin.New()
     r.Use(gin.Recovery())
-    r.Use(middleware.CORS())
+    r.Use(middleware.CORS(cfg.AllowedOrigins()...))
     r.Use(middleware.RequestLogger())
 
     jwtCfg := config.JWTConfig{
@@ -26,12 +26,17 @@ func SetupRouter(rdb *redis.Client, cfg *GatewayConfig) *gin.Engine {
     }
     jwtAuth := auth.NewJWTAuth(jwtCfg)
     authMiddleware := middleware.JWTAuth(jwtAuth, rdb)
-    limiter := middleware.NewRateLimiter(rdb, 60, time.Minute)
+
+    // General API rate limit: 60 req/min per route per IP
+    generalLimiter := middleware.NewRateLimiter(rdb, 60, time.Minute)
+    // Auth endpoints: stricter limit to prevent brute force — 10 req/min per route per IP
+    authLimiter := middleware.NewRateLimiter(rdb, 10, time.Minute)
 
     api := r.Group("/api/v1")
-    api.Use(limiter.Limit(60))
+    api.Use(generalLimiter.Limit(60))
     {
         auth := api.Group("/auth")
+        auth.Use(authLimiter.Limit(10))
         {
             auth.POST("/register", proxyTo(cfg.Services.UserSvcAddr))
             auth.POST("/login", proxyTo(cfg.Services.UserSvcAddr))
