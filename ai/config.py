@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     RABBITMQ_ADDR: str = "amqp://guest:guest@localhost:5672/"
 
     # --- API 密钥（留空，在 .env 中填写）---
-    OPENAI_API_KEY: str = ""
-    LLM_BASE_URL: str = ""
-    LLM_MODEL: str = "gpt-4o-mini"
+    OPENAI_API_KEY: str = "ollama"    # Ollama 本地不需要真实 Key，填任意值
+    LLM_BASE_URL: str = "http://localhost:11434/v1"  # Ollama OpenAI 兼容端点
+    LLM_MODEL: str = "qwen3:4b"       # Ollama 本地翻译模型
     ELEVENLABS_API_KEY: str = ""
 
     # --- Whisper 模型 ---
