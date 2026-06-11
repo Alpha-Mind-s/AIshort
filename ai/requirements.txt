@@ -29,11 +29,14 @@ openai>=1.55            # OpenAI / LLM 兼容 API（翻译用）
 numpy>=1.26           # 矩阵运算
 scikit-learn>=1.5     # 协同过滤模型
 
+# --- HTTP Server ---
+fastapi>=0.115         # REST API 框架
+uvicorn[standard]>=0.32  # ASGI 服务器
+
 # --- 通用工具 ---
 python-dotenv>=1.0    # .env 配置加载
 Pillow>=10.4          # 图像处理
 httpx>=0.27           # 异步 HTTP 客户端（API 回调）
-celery>=5.4           # 任务队列 Worker（备用方案）
 loguru>=0.7           # 结构化日志
 pydantic>=2.8         # 数据校验
 pydantic-settings>=2.4  # 配置管理
