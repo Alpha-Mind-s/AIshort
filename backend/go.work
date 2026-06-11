@@ -1,0 +1,10 @@
+go 1.25.0
+
+use (
+	./pkg
+	./cmd/gateway
+	./services/user
+	./services/content
+	./services/video
+	./services/payment
+)
