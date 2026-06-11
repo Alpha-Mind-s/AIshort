@@ -362,10 +362,15 @@ components:
       type: object
       required:
         - upload_id
+        - episode_id
       properties:
         upload_id:
           type: string
           description: 上传会话 ID
+        episode_id:
+          type: integer
+          format: int64
+          description: 上传关联的剧集 ID
         parts:
           type: array
           description: 分片上传的 Part 列表（分片模式必传）
