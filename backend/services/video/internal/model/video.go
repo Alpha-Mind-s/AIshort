@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type UploadURLRequest struct {
 	Filename    string `json:"filename" binding:"required"`
 	FileSize    int64  `json:"file_size" binding:"required"`
@@ -42,4 +44,26 @@ type VideoAsset struct {
 	FileSize   int64  `json:"file_size"`
 	Duration   int    `json:"duration"`
 	Status     string `json:"status"`
+}
+
+type UploadCompleteRequest struct {
+	UploadID  string `json:"upload_id" binding:"required"`
+	EpisodeID int64  `json:"episode_id" binding:"required"`
+	Duration  *int   `json:"duration,omitempty"`
+	FileSize  int64  `json:"file_size,omitempty"`
+}
+
+type UploadCompleteResponse struct {
+	VideoURL string `json:"video_url"`
+	Duration int    `json:"duration"`
+	Status   string `json:"status"`
+}
+
+type UploadSession struct {
+	UploadID    string
+	ObjectKey   string
+	Filename    string
+	FileSize    int64
+	ContentType string
+	CreatedAt   time.Time
 }
