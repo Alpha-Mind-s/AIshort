@@ -15,7 +15,7 @@ openai-whisper>=20240930  # Whisper 模型（本地推理）
 # whisperx>=3.1.0        # WhisperX（说话人分离 + 更精确的时间戳，后期启用）
 
 # --- 翻译 ---
-deepl>=1.20.0         # DeepL API SDK
+openai>=1.55            # OpenAI / LLM 兼容 API（翻译用）
 
 # --- 配音 ---
 # elevenlabs>=1.0.0    # ElevenLabs API SDK（MVP 阶段使用）

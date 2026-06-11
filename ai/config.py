@@ -23,7 +23,8 @@ class Settings(BaseSettings):
 
     # --- API 密钥 ---
     OPENAI_API_KEY: str = ""
-    DEEPL_API_KEY: str = ""
+    LLM_BASE_URL: str = ""        # 自定义 LLM 端点（留空=OpenAI 官方）
+    LLM_MODEL: str = "gpt-4o-mini"  # 翻译模型（性价比高）
     ELEVENLABS_API_KEY: str = ""
 
     # --- Whisper 模型 ---

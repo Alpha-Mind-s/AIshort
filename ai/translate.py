@@ -1,41 +1,39 @@
 """
 AI shot — 文本翻译模块
 
-技术选型: DeepL API（MVP 阶段）
-- 上下文感知分段翻译
-- 术语表管理
-- 后期切换自建 LLM 翻译
+技术选型: LLM API（OpenAI 兼容接口）
+- 上下文感知批量翻译
+- 支持 OpenAI / DeepSeek / 本地 Ollama 等多种后端
+- 术语一致性控制
 """
 
-import json
-from pathlib import Path
-
 from loguru import logger
+from openai import OpenAI
 
 from config import settings
 
 
 class TranslationProcessor:
-    """翻译处理器"""
+    """LLM 翻译处理器"""
+
+    # 翻译 System Prompt
+    SYSTEM_PROMPT = """You are a professional subtitle translator for short drama series.
+Translate the given Chinese text into natural, colloquial {target_lang_name}.
+Rules:
+- Preserve the original tone and emotion (anger, sadness, humor, etc.)
+- Keep translations concise — spoken dialogue, not written prose
+- Maintain consistency: same term → same translation throughout
+- Do NOT translate character names, place names, or brand names
+- Output ONLY the translated text, no explanations, no notes
+- Preserve [SEGMENT_BREAK] separators exactly as-is in the output"""
 
     def __init__(self):
-        self.api_key = settings.DEEPL_API_KEY
-        # 语言代码映射: 项目内部码 → DeepL API 码
-        self.lang_map = {
-            "zh": "ZH",
-            "en": "EN-US",
-            "es": "ES",
-            "pt": "PT-BR",
-            "ja": "JA",
-            "ko": "KO",
-            "fr": "FR",
-            "de": "DE",
-            "ar": "AR",
-            "th": "TH",
-            "vi": "VI",
-        }
-        # 术语表缓存
-        self.glossary_id = None
+        self.client = OpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.LLM_BASE_URL or None,  # None = default OpenAI
+        )
+        self.model = settings.LLM_MODEL
+        self.temperature = 0.3  # 低温度保证翻译一致性
 
     # ------------------------------------------------------------------
     # 核心处理
@@ -45,16 +43,16 @@ class TranslationProcessor:
         """
         执行文本翻译
 
-        输入参数:
-            msg["input"]["transcript"]     — 原始转录文本
-            msg["input"]["segments"]       — 带时间戳的分段
-            msg["input"]["source_lang"]    — 源语言，如 "zh"
-            msg["input"]["target_lang"]    — 目标语言，如 "en"
+        输入:
+            msg["input"]["transcript"]       — 原始转录文本
+            msg["input"]["segments"]         — 带时间戳的分段
+            msg["input"]["source_lang"]      — 源语言，如 "zh"
+            msg["input"]["target_lang"]      — 目标语言，如 "en"
 
         返回:
             {
                 "translated_text": "完整翻译文本",
-                "translated_segments": [...],   # 分段翻译（保留时间戳）
+                "translated_segments": [...],    # 分段翻译（保留时间戳）
                 "source_lang": "zh",
                 "target_lang": "en"
             }
@@ -64,19 +62,27 @@ class TranslationProcessor:
         segments = msg["input"].get("segments", [])
         episode_id = msg.get("episode_id")
 
-        logger.info("翻译开始 episode={} {} → {}", episode_id, source_lang, target_lang)
+        target_lang_name = self._lang_name(target_lang)
+        logger.info("LLM 翻译开始 episode={} {} → {} (model={})",
+                     episode_id, source_lang, target_lang, self.model)
 
         if not segments:
             logger.warning("无分段数据，跳过翻译")
             return {"translated_text": "", "translated_segments": []}
 
-        # 翻译每个分段（上下文感知：传入前后段作为 context）
-        translated_segments = self._translate_segments(segments, source_lang, target_lang)
+        # 分批翻译（每批最多 15 段，控制上下文长度）
+        batch_size = 15
+        translated_segments = []
+
+        for i in range(0, len(segments), batch_size):
+            batch = segments[i:i + batch_size]
+            translated_batch = self._translate_batch(batch, target_lang, target_lang_name)
+            translated_segments.extend(translated_batch)
 
         # 合并完整文本
         translated_text = " ".join(s["text"] for s in translated_segments)
 
-        logger.info("翻译完成 episode={} segments={}", episode_id, len(translated_segments))
+        logger.info("LLM 翻译完成 episode={} segments={}", episode_id, len(translated_segments))
 
         return {
             "translated_text": translated_text,
@@ -86,80 +92,96 @@ class TranslationProcessor:
         }
 
     # ------------------------------------------------------------------
-    # DeepL API
+    # LLM 翻译
     # ------------------------------------------------------------------
 
-    def _translate_segments(self, segments: list, source_lang: str, target_lang: str) -> list:
+    def _translate_batch(self, segments: list, target_lang: str, target_lang_name: str) -> list:
         """
-        分段翻译（带上下文）
+        批量翻译一个分段组
 
-        DeepL 策略：
-        - 每 10 段合并为一次 API 请求（减少调用次数）
-        - 段间用特殊分隔符标记，翻译后拆分
-        - 后期可用 LLM 做上下文感知批量翻译
+        策略:
+        1. 用 [SEGMENT_BREAK] 分隔符拼接各段
+        2. 发送给 LLM 一次性翻译
+        3. 按分隔符拆分回独立分段
         """
-        SEPARATOR = " [SEGMENT_BREAK] "
-        batch_size = 10
+        SEP = "[SEGMENT_BREAK]"
+
+        # 构建输入文本（带段编号便于调试）
+        texts = []
+        for i, seg in enumerate(segments):
+            texts.append(f"<seg{i}>{seg['text']}</seg{i}>")
+        combined = f"\n{SEP}\n".join(texts)
+
+        # 构建 Prompt
+        system_prompt = self.SYSTEM_PROMPT.format(target_lang_name=target_lang_name)
+
+        user_prompt = (
+            f"Translate the following lines from Chinese to {target_lang_name}.\n"
+            f"Each line is wrapped in <segN> tags. "
+            f"Output the translations in the same format, separated by '{SEP}'.\n"
+            f"Keep <segN> tags EXACTLY as-is — only translate the text inside.\n\n"
+            f"{combined}"
+        )
+
+        # 调用 LLM
+        logger.debug("LLM 翻译请求: {} segments, ~{} chars", len(segments), len(combined))
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=self.temperature,
+            max_tokens=4096,
+        )
+
+        translated_combined = response.choices[0].message.content.strip()
+        logger.debug("LLM 翻译响应: {} chars", len(translated_combined))
+
+        # 拆分回分段
+        translated_parts = translated_combined.split(SEP)
+
         result = []
+        for j, seg in enumerate(segments):
+            translated_text = ""
+            if j < len(translated_parts):
+                part = translated_parts[j].strip()
+                # 提取 <segN>...</segN> 中的内容
+                import re
+                match = re.search(rf"<seg{j}>(.*?)</seg{j}>", part, re.DOTALL)
+                if match:
+                    translated_text = match.group(1).strip()
+                else:
+                    # 回退：直接用整段文本（去标签）
+                    translated_text = re.sub(r"<seg\d+>|</seg\d+>", "", part).strip()
 
-        for i in range(0, len(segments), batch_size):
-            batch = segments[i : i + batch_size]
-
-            # 合并为单个文本，用分隔符标记段边界
-            combined = SEPARATOR.join(seg["text"] for seg in batch)
-
-            # 调用 DeepL API
-            translated_combined = self._call_deepl(combined, source_lang, target_lang)
-
-            # 拆分回分段
-            translated_texts = translated_combined.split(SEPARATOR)
-
-            for j, seg in enumerate(batch):
-                translated_seg = {
-                    "start": seg["start"],
-                    "end": seg["end"],
-                    "text": translated_texts[j].strip() if j < len(translated_texts) else "",
-                    "original_text": seg["text"],
-                }
-                result.append(translated_seg)
+            result.append({
+                "start": seg["start"],
+                "end": seg["end"],
+                "text": translated_text,
+                "original_text": seg["text"],
+            })
 
         return result
 
-    def _call_deepl(self, text: str, source_lang: str, target_lang: str) -> str:
-        """调用 DeepL Translate API"""
-        import requests
-
-        url = "https://api-free.deepl.com/v2/translate"  # 免费版
-        source_code = self.lang_map.get(source_lang)
-        target_code = self.lang_map.get(target_lang, "EN-US")
-
-        payload = {
-            "text": [text],
-            "target_lang": target_code,
-            "preserve_formatting": True,
-        }
-        if source_code:
-            payload["source_lang"] = source_code
-
-        headers = {
-            "Authorization": f"DeepL-Auth-Key {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
-        logger.debug("DeepL API 请求: {} → {} ({} 字符)", source_lang, target_lang, len(text))
-
-        resp = requests.post(url, json=payload, headers=headers, timeout=30)
-        resp.raise_for_status()
-
-        data = resp.json()
-        translated = data["translations"][0]["text"]
-        return translated
-
     # ------------------------------------------------------------------
-    # 术语表管理（后期实现）
+    # 工具
     # ------------------------------------------------------------------
 
-    def load_glossary(self, glossary_name: str):
-        """加载术语表（后期功能：确保专业术语翻译一致性）"""
-        # TODO: DeepL Glossary API 集成
-        pass
+    def _lang_name(self, code: str) -> str:
+        """语言代码 → 英文名称"""
+        names = {
+            "zh": "Chinese",
+            "en": "English",
+            "es": "Spanish",
+            "pt": "Portuguese",
+            "ja": "Japanese",
+            "ko": "Korean",
+            "fr": "French",
+            "de": "German",
+            "ar": "Arabic",
+            "th": "Thai",
+            "vi": "Vietnamese",
+        }
+        return names.get(code, code)
