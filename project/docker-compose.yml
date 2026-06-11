@@ -317,6 +317,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_DEFAULT_THEME=light
     volumes:
       - grafana-data:/var/lib/grafana
     networks:

@@ -42,10 +42,10 @@ export default function LoginPage() {
             <Film className="h-8 w-8 text-purple-400" />
           </div>
           <h1 className="text-2xl font-bold">AIshort Studio</h1>
-          <p className="text-sm text-gray-500 mt-1">Content management for administrators</p>
+          <p className="text-sm text-gray-400 mt-1">Content management for administrators</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white/[0.03] backdrop-blur border border-white/10 rounded-2xl p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white/[0.04] backdrop-blur border border-white/15 rounded-2xl p-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
@@ -53,7 +53,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 placeholder-gray-600"
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 placeholder-gray-400"
             />
           </div>
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
             />
           </div>
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs text-gray-400 text-center">
           Use admin@example.com / password123
         </p>
       </div>

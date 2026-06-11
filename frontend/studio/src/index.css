@@ -38,11 +38,19 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: #030712;
+  color: #fafafa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
+}
+
+/* Ensure consistent dark background regardless of OS preference */
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #030712;
+    color: #fafafa;
+  }
 }
 
 #root {

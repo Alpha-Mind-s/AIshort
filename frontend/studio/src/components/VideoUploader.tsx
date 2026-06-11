@@ -109,7 +109,7 @@ export function VideoUploader({
         <div className="h-2 rounded-full bg-white/10 overflow-hidden">
           <div className="h-full bg-purple-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
         </div>
-        <p className="text-xs text-gray-500 text-center">Uploading...</p>
+        <p className="text-xs text-gray-400 text-center">Uploading...</p>
       </div>
     )
   }
@@ -128,13 +128,13 @@ export function VideoUploader({
       onClick={() => inputRef.current?.click()}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
-      className="rounded-xl border-2 border-dashed border-white/10 hover:border-purple-500/50 p-10 flex flex-col items-center gap-3 cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]"
+      className="rounded-xl border-2 border-dashed border-white/15 hover:border-purple-500/50 p-10 flex flex-col items-center gap-3 cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]"
     >
       <div className="h-14 w-14 rounded-full bg-purple-500/10 flex items-center justify-center">
         <Upload className="h-6 w-6 text-purple-400" />
       </div>
       <p className="text-sm font-medium">Drag & drop or click to browse</p>
-      <p className="text-xs text-gray-500">MP4, MOV, WebM — up to 2 GB</p>
+      <p className="text-xs text-gray-400">MP4, MOV, WebM — up to 2 GB</p>
       <input ref={inputRef} type="file" accept="video/mp4,video/quicktime,video/webm" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f) }} />
     </div>
   )

@@ -32,7 +32,7 @@ export function CoverUploader({
   if (preview) {
     return (
       <div className="relative inline-block">
-        <div className="w-36 h-48 rounded-lg overflow-hidden border border-white/10">
+        <div className="w-36 h-48 rounded-lg overflow-hidden border border-white/15">
           <img src={preview} alt="Cover" className="w-full h-full object-cover" />
         </div>
         <div className="absolute -top-2 -right-2 flex gap-1">
@@ -50,10 +50,10 @@ export function CoverUploader({
         onClick={() => inputRef.current?.click()}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        className="w-36 h-48 rounded-lg border-2 border-dashed border-white/10 hover:border-purple-500/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]"
+        className="w-36 h-48 rounded-lg border-2 border-dashed border-white/15 hover:border-purple-500/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]"
       >
-        <ImageIcon className="h-6 w-6 text-gray-500" />
-        <p className="text-[10px] text-gray-500 text-center px-2">JPG, PNG, WebP<br />max 5 MB</p>
+        <ImageIcon className="h-6 w-6 text-gray-400" />
+        <p className="text-[10px] text-gray-400 text-center px-2">JPG, PNG, WebP<br />max 5 MB</p>
       </div>
       {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />

@@ -56,15 +56,15 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-gray-950/80 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-white/15 bg-gray-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Film className="h-5 w-5 text-purple-400" />
             <span className="font-bold text-sm">AIshort Studio</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-500">{user?.email}</span>
-            <button onClick={clearAuth} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors">
+            <span className="text-xs text-gray-400">{user?.email}</span>
+            <button onClick={clearAuth} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-200 transition-colors">
               <LogOut className="h-3 w-3" /> Log out
             </button>
           </div>
@@ -76,16 +76,16 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-xl font-bold">Dramas</h1>
-            <p className="text-sm text-gray-500 mt-1">{dramas.length} total</p>
+            <p className="text-sm text-gray-400 mt-1">{dramas.length} total</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-56 rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 placeholder-gray-600"
+                className="w-56 rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 placeholder-gray-400"
               />
             </div>
             <button
@@ -100,11 +100,11 @@ export default function DashboardPage() {
 
         {/* Drama grid */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">Loading...</div>
+          <div className="text-center py-20 text-gray-400">Loading...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <Film className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-            <p className="text-gray-500">No dramas found</p>
+            <Film className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400">No dramas found</p>
             <button onClick={() => navigate('/dramas/new')} className="text-sm text-purple-400 hover:text-purple-300 mt-2 inline-block">
               Create your first drama
             </button>
@@ -114,7 +114,7 @@ export default function DashboardPage() {
             {filtered.map((drama) => (
               <div
                 key={drama.id}
-                className="group rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden hover:border-purple-500/30 transition-all cursor-pointer"
+                className="group rounded-xl border border-white/15 bg-white/[0.03] overflow-hidden hover:border-purple-500/30 transition-all cursor-pointer"
                 onClick={() => navigate(`/dramas/${drama.id}`)}
               >
                 <div className="aspect-[2/1] bg-white/5 relative overflow-hidden">
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="p-4 space-y-2">
                   <h3 className="font-semibold text-sm truncate">{drama.title}</h3>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <div className="flex items-center gap-3 text-xs text-gray-400">
                     <span>{drama.total_episodes} episodes</span>
                   </div>
                   {drama.tags.length > 0 && (

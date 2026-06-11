@@ -49,19 +49,19 @@ export function EpisodeForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Episode #</label>
-          <input type="number" {...register('episode_no', { valueAsNumber: true })} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+          <input type="number" {...register('episode_no', { valueAsNumber: true })} className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
           {errors.episode_no && <p className="text-xs text-red-400 mt-1">{errors.episode_no.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Duration (sec)</label>
-          <input type="number" {...register('duration', { valueAsNumber: true })} className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+          <input type="number" {...register('duration', { valueAsNumber: true })} className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
           {errors.duration && <p className="text-xs text-red-400 mt-1">{errors.duration.message}</p>}
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">Episode Title</label>
-        <input {...register('title')} placeholder="e.g. The Beginning" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+        <input {...register('title')} placeholder="e.g. The Beginning" className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
         {errors.title && <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>}
       </div>
 
@@ -81,11 +81,11 @@ export function EpisodeForm({
         <div className="space-y-2">
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-center gap-2">
-              <select {...register(`subtitles.${index}.language`)} className="w-28 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30">
+              <select {...register(`subtitles.${index}.language`)} className="w-28 rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30">
                 {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
               </select>
-              <input {...register(`subtitles.${index}.url`)} placeholder="https://...subtitles.vtt" className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30" />
-              <button type="button" onClick={() => remove(index)} className="p-1 hover:bg-white/5 rounded"><X className="h-3 w-3 text-gray-500" /></button>
+              <input {...register(`subtitles.${index}.url`)} placeholder="https://...subtitles.vtt" className="flex-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30" />
+              <button type="button" onClick={() => remove(index)} className="p-1 hover:bg-white/5 rounded"><X className="h-3 w-3 text-gray-400" /></button>
             </div>
           ))}
         </div>

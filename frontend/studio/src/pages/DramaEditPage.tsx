@@ -90,7 +90,7 @@ export default function DramaEditPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-400">Loading...</p>
       </div>
     )
   }
@@ -98,14 +98,14 @@ export default function DramaEditPage() {
   if (!drama) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-500">Drama not found</p>
+        <p className="text-gray-400">Drama not found</p>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <header className="border-b border-white/10 bg-gray-950/80 backdrop-blur">
+      <header className="border-b border-white/15 bg-gray-950/80 backdrop-blur">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate('/dashboard')} className="p-1 hover:bg-white/5 rounded transition-colors">
@@ -142,11 +142,11 @@ export default function DramaEditPage() {
         </section>
 
         {/* Episodes */}
-        <section className="border-t border-white/10 pt-8">
+        <section className="border-t border-white/15 pt-8">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-semibold text-gray-300">Episodes</h2>
-              <p className="text-xs text-gray-500 mt-0.5">{episodes.length} total</p>
+              <p className="text-xs text-gray-400 mt-0.5">{episodes.length} total</p>
             </div>
             <button
               onClick={() => navigate(`/episodes/new?drama_id=${dramaId}`)}

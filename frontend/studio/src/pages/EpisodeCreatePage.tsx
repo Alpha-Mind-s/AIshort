@@ -49,14 +49,14 @@ export default function EpisodeCreatePage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <header className="border-b border-white/10 bg-gray-950/80 backdrop-blur">
+      <header className="border-b border-white/15 bg-gray-950/80 backdrop-blur">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
           <button onClick={() => navigate(`/dramas/${dramaId}`)} className="p-1 hover:bg-white/5 rounded transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-400" />
           </button>
           <div>
             <h1 className="font-bold text-sm">Add Episode</h1>
-            {dramaTitle && <p className="text-xs text-gray-500">{dramaTitle}</p>}
+            {dramaTitle && <p className="text-xs text-gray-400">{dramaTitle}</p>}
           </div>
         </div>
       </header>
