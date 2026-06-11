@@ -4,4 +4,7 @@ use (
 	./pkg
 	./cmd/gateway
 	./services/user
+	./services/content
+	./services/video
+	./services/payment
 )
