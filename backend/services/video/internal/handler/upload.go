@@ -12,11 +12,12 @@ import (
 )
 
 type UploadHandler struct {
-	svc *svc.UploadService
+	svc  *svc.UploadService
+	repo *svc.UploadRepo
 }
 
-func NewUploadHandler(svc *svc.UploadService) *UploadHandler {
-	return &UploadHandler{svc: svc}
+func NewUploadHandler(svc *svc.UploadService, repo *svc.UploadRepo) *UploadHandler {
+	return &UploadHandler{svc: svc, repo: repo}
 }
 
 func (h *UploadHandler) GetUploadURL(c *gin.Context) {
@@ -64,4 +65,20 @@ func (h *UploadHandler) CompleteMultipart(c *gin.Context) {
 	}
 
 	response.OK(c, nil)
+}
+
+func (h *UploadHandler) CompleteUpload(c *gin.Context) {
+	var req model.UploadCompleteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, pkgErr.ErrBadRequest.Code, pkgErr.ErrBadRequest.Message)
+		return
+	}
+
+	resp, err := h.svc.CompleteUpload(c.Request.Context(), h.repo, &req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, pkgErr.ErrInternal.Code, pkgErr.ErrInternal.Message)
+		return
+	}
+
+	response.OK(c, resp)
 }

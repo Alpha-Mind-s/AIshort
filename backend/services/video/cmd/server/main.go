@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ai-shot/pkg/database"
 	"github.com/ai-shot/pkg/logger"
 	"github.com/ai-shot/video-svc/internal"
 	"github.com/ai-shot/video-svc/internal/config"
@@ -17,8 +18,21 @@ func main() {
 	logger.Init("debug", true)
 
 	cfg := config.Load()
+	ctx := context.Background()
 
-	router := internal.SetupRouter(cfg.S3.Endpoint, cfg.S3.Bucket, cfg.S3.CDNURL)
+	pool, err := database.NewPool(ctx, cfg.DB.DSN)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to connect to database")
+	}
+	defer pool.Close()
+	logger.Info().Msg("database connected")
+
+	router, err := internal.SetupRouter(pool,
+		cfg.S3.Endpoint, cfg.S3.AccessKey, cfg.S3.SecretKey,
+		cfg.S3.Bucket, cfg.S3.CDNURL, cfg.S3.UseSSL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to setup router")
+	}
 
 	srv := &http.Server{
 		Addr:    cfg.Server.Addr,
