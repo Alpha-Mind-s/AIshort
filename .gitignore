@@ -79,3 +79,6 @@ Thumbs.db
 .env.local
 .env.*.local
 *.log
+ai/output/
+ai/temp/
+ai/test_data/
