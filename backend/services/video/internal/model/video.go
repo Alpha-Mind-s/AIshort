@@ -9,6 +9,7 @@ type UploadURLRequest struct {
 }
 
 type UploadURLResponse struct {
+	UploadID    string `json:"upload_id"`
 	UploadURL   string `json:"upload_url"`
 	DownloadURL string `json:"download_url"`
 	ExpiresIn   int64  `json:"expires_in"`

@@ -1,5 +1,3 @@
-version: "3.8"
-
 name: aishot
 
 services:
@@ -7,14 +5,14 @@ services:
   # API Gateway (Go)
   # ==========================================
   api-gateway:
-    image: golang:1.22-alpine
+    image: golang:alpine
     container_name: aishot-gateway
-    working_dir: /app
+    working_dir: /app/cmd/gateway
     volumes:
-      - ../backend/gateway:/app
+      - ../backend:/app
     ports:
       - "8080:8080"
-    command: go run ./cmd/gateway -addr :8080
+    command: go run . -addr :8080
     environment:
       - GIN_MODE=debug
       - USER_SVC_ADDR=user-service:8081
@@ -22,6 +20,7 @@ services:
       - VIDEO_SVC_ADDR=video-service:8083
       - PAYMENT_SVC_ADDR=payment-service:8084
       - REDIS_ADDR=redis:6379
+      - GOWORK=off
     depends_on:
       redis:
         condition: service_started
@@ -35,11 +34,11 @@ services:
   # User & Auth Service (Go)
   # ==========================================
   user-service:
-    image: golang:1.22-alpine
+    image: golang:alpine
     container_name: aishot-user
-    working_dir: /app
+    working_dir: /app/services/user
     volumes:
-      - ../backend/services/user:/app
+      - ../backend:/app
     ports:
       - "8081:8081"
     command: go run ./cmd/server -addr :8081
@@ -50,6 +49,7 @@ services:
       - GOOGLE_CLIENT_ID=
       - APPLE_CLIENT_ID=
       - FACEBOOK_CLIENT_ID=
+      - GOWORK=off
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,11 +63,11 @@ services:
   # Content Service (Go)
   # ==========================================
   content-service:
-    image: golang:1.22-alpine
+    image: golang:alpine
     container_name: aishot-content
-    working_dir: /app
+    working_dir: /app/services/content
     volumes:
-      - ../backend/services/content:/app
+      - ../backend:/app
     ports:
       - "8082:8082"
     command: go run ./cmd/server -addr :8082
@@ -75,6 +75,7 @@ services:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
       - ES_ADDR=elasticsearch:9200
+      - GOWORK=off
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,22 +91,23 @@ services:
   # Video Management Service (Go)
   # ==========================================
   video-service:
-    image: golang:1.22-alpine
+    image: golang:alpine
     container_name: aishot-video
-    working_dir: /app
+    working_dir: /app/services/video
     volumes:
-      - ../backend/services/video:/app
+      - ../backend:/app
     ports:
       - "8083:8083"
     command: go run ./cmd/server -addr :8083
     environment:
       - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
       - REDIS_ADDR=redis:6379
-      - S3_ENDPOINT=http://minio:9000
+      - S3_ENDPOINT=minio:9000
       - S3_ACCESS_KEY=minioadmin
       - S3_SECRET_KEY=minioadmin
       - S3_BUCKET=aishot-videos
       - CDN_URL=http://localhost:8080
+      - GOWORK=off
     depends_on:
       postgres:
         condition: service_healthy
@@ -121,11 +123,11 @@ services:
   # Payment Service (Go)
   # ==========================================
   payment-service:
-    image: golang:1.22-alpine
+    image: golang:alpine
     container_name: aishot-payment
-    working_dir: /app
+    working_dir: /app/services/payment
     volumes:
-      - ../backend/services/payment:/app
+      - ../backend:/app
     ports:
       - "8084:8084"
     command: go run ./cmd/server -addr :8084
@@ -135,6 +137,7 @@ services:
       - PAYPAL_CLIENT_ID=
       - PAYPAL_CLIENT_SECRET=
       - STRIPE_API_KEY=
+      - GOWORK=off
     depends_on:
       postgres:
         condition: service_healthy
@@ -242,7 +245,7 @@ services:
 
   # RabbitMQ
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+    image: rabbitmq:3.13-management
     container_name: aishot-rabbitmq
     ports:
       - "5672:5672"
@@ -310,7 +313,7 @@ services:
     image: grafana/grafana:latest
     container_name: aishot-grafana
     ports:
-      - "3001:3000"
+      - "3002:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
