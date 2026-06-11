@@ -3,6 +3,7 @@ package repository
 import (
     "context"
     "fmt"
+    "strings"
 
     "github.com/jackc/pgx/v5/pgxpool"
     "github.com/ai-shot/content-svc/internal/model"
@@ -87,4 +88,103 @@ func (r *DramaRepository) FindByID(ctx context.Context, id int64) (*model.Drama,
         return nil, err
     }
     return d, nil
+}
+
+func (r *DramaRepository) Create(ctx context.Context, req *model.CreateDramaRequest, creatorID int64) (*model.Drama, error) {
+	status := req.Status
+	if status == "" {
+		status = "draft"
+	}
+	d := &model.Drama{}
+	err := r.pool.QueryRow(ctx, `
+		INSERT INTO dramas (title, description, cover_url, category_id, creator_id, tags, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, title, description, cover_url, category_id, creator_id,
+		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		req.Title, req.Description, req.CoverURL, req.CategoryID, creatorID, req.Tags, status).
+		Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
+			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+
+func (r *DramaRepository) Update(ctx context.Context, id int64, req *model.UpdateDramaRequest) (*model.Drama, error) {
+	sets := []string{}
+	args := []interface{}{}
+	argIdx := 1
+
+	if req.Title != nil {
+		sets = append(sets, fmt.Sprintf("title=$%d", argIdx))
+		args = append(args, *req.Title)
+		argIdx++
+	}
+	if req.Description != nil {
+		sets = append(sets, fmt.Sprintf("description=$%d", argIdx))
+		args = append(args, *req.Description)
+		argIdx++
+	}
+	if req.CoverURL != nil {
+		sets = append(sets, fmt.Sprintf("cover_url=$%d", argIdx))
+		args = append(args, *req.CoverURL)
+		argIdx++
+	}
+	if req.CategoryID != nil {
+		sets = append(sets, fmt.Sprintf("category_id=$%d", argIdx))
+		args = append(args, *req.CategoryID)
+		argIdx++
+	}
+	if req.Tags != nil {
+		sets = append(sets, fmt.Sprintf("tags=$%d", argIdx))
+		args = append(args, req.Tags)
+		argIdx++
+	}
+	if req.Status != nil {
+		sets = append(sets, fmt.Sprintf("status=$%d", argIdx))
+		args = append(args, *req.Status)
+		argIdx++
+	}
+
+	if len(sets) == 0 {
+		return r.FindByID(ctx, id)
+	}
+
+	args = append(args, id)
+	query := fmt.Sprintf(`
+		UPDATE dramas SET %s, updated_at=NOW()
+		WHERE id=$%d
+		RETURNING id, title, description, cover_url, category_id, creator_id,
+		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		strings.Join(sets, ", "), argIdx)
+
+	d := &model.Drama{}
+	err := r.pool.QueryRow(ctx, query, args...).Scan(
+		&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
+		&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+
+func (r *DramaRepository) Delete(ctx context.Context, id int64) error {
+	_, err := r.pool.Exec(ctx, `UPDATE dramas SET status='archived', updated_at=NOW() WHERE id=$1`, id)
+	return err
+}
+
+func (r *DramaRepository) UpdateStatus(ctx context.Context, id int64, status string) (*model.Drama, error) {
+	d := &model.Drama{}
+	err := r.pool.QueryRow(ctx, `
+		UPDATE dramas SET status=$1, updated_at=NOW()
+		WHERE id=$2
+		RETURNING id, title, description, cover_url, category_id, creator_id,
+		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		status, id).
+		Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
+			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
 }
