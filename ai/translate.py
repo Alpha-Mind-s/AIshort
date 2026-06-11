@@ -141,6 +141,7 @@ Rules:
 
         # 拆分回分段
         translated_parts = translated_combined.split(SEP)
+        import re
 
         result = []
         for j, seg in enumerate(segments):
@@ -148,13 +149,14 @@ Rules:
             if j < len(translated_parts):
                 part = translated_parts[j].strip()
                 # 提取 <segN>...</segN> 中的内容
-                import re
-                match = re.search(rf"<seg{j}>(.*?)</seg{j}>", part, re.DOTALL)
+                match = re.search(rf"<seg{j}>\s*(.*?)\s*</seg{j}>", part, re.DOTALL)
                 if match:
                     translated_text = match.group(1).strip()
                 else:
-                    # 回退：直接用整段文本（去标签）
-                    translated_text = re.sub(r"<seg\d+>|</seg\d+>", "", part).strip()
+                    # 回退1：尝试匹配任意 <seg\d+> 标签
+                    fallback = re.sub(r"<seg\d+>\s*|\s*</seg\d+>", "", part).strip()
+                    # 回退2：如果去除标签后为空，直接用整段
+                    translated_text = fallback if fallback else part
 
             result.append({
                 "start": seg["start"],
