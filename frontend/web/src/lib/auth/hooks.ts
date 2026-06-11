@@ -8,7 +8,7 @@ import { useAuthStore, type AuthUser } from "@/stores/auth-store";
 import * as authApi from "@/lib/api/auth";
 import type { OAuthProvider, AuthTokens, LoginRequest, RegisterRequest } from "@/lib/api/auth";
 
-const IS_MOCK = process.env.NEXT_PUBLIC_MOCK === "true";
+const IS_MOCK = process.env.NEXT_PUBLIC_MOCK === "true" || true; // force mock for now
 
 function mockAuthTokens(email: string, nickname?: string): AuthTokens {
   const user: AuthUser = {

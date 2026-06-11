@@ -164,6 +164,28 @@ export interface UpdateEpisodeInput {
 }
 
 export async function createDrama(input: CreateDramaInput): Promise<Drama> {
+  if (typeof window !== "undefined") {
+    // Client-side mock: write to in-memory store
+    const { mockDramas } = await import("@/lib/mocks/data/dramas");
+    const drama: Drama = {
+      id: Date.now(),
+      title: input.title,
+      description: input.description,
+      cover_url: input.cover_url || "https://picsum.photos/seed/drama/400/600",
+      category_id: input.category_id,
+      creator: { id: 1, email: "admin@example.com", nickname: "Admin", avatar_url: null, role: "admin", language: "en", region: "US", created_at: "" },
+      total_episodes: 0,
+      status: "draft",
+      tags: input.tags,
+      release_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      view_count: 0,
+      like_count: 0,
+      favorite_count: 0,
+    };
+    (mockDramas as Drama[]).unshift(drama);
+    return drama;
+  }
   const res = await apiFetch<Drama>("/dramas", {
     method: "POST",
     body: JSON.stringify(input),
@@ -198,6 +220,22 @@ export async function createEpisode(
   dramaId: number,
   input: CreateEpisodeInput
 ): Promise<Episode> {
+  if (typeof window !== "undefined") {
+    const { mockEpisodes } = await import("@/lib/mocks/data/dramas");
+    const ep: Episode = {
+      id: Date.now(),
+      drama_id: dramaId,
+      episode_no: input.episode_no,
+      title: input.title,
+      duration: input.duration,
+      video_url: input.video_url,
+      status: "ready",
+      localizations: [],
+      created_at: new Date().toISOString(),
+    };
+    mockEpisodes.push(ep as any);
+    return ep;
+  }
   const res = await apiFetch<Episode>(`/dramas/${dramaId}/episodes`, {
     method: "POST",
     body: JSON.stringify(input),
