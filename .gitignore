@@ -12,7 +12,9 @@ backend/*/bin/
 /target/
 
 # === Node / Next.js ===
+node_modules/
 frontend/web/node_modules/
+frontend/studio/node_modules/
 frontend/web/.next/
 frontend/web/out/
 frontend/web/build/
