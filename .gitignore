@@ -1,0 +1,81 @@
+# === Go ===
+backend/vendor/
+backend/*/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.test.exe
+/target/
+
+# === Node / Next.js ===
+frontend/web/node_modules/
+frontend/web/.next/
+frontend/web/out/
+frontend/web/build/
+frontend/web/.env.local
+frontend/web/.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Flutter / Dart ===
+frontend/mobile/build/
+frontend/mobile/.dart_tool/
+frontend/mobile/.packages
+frontend/mobile/.pub-cache/
+frontend/mobile/.flutter-plugins
+frontend/mobile/.flutter-plugins-dependencies
+frontend/mobile/*.iml
+frontend/mobile/.idea/
+frontend/mobile/.vscode/
+frontend/mobile/ios/Pods/
+frontend/mobile/ios/.symlinks/
+frontend/mobile/android/.gradle/
+frontend/mobile/android/local.properties
+frontend/mobile/.flutter-plugins-dependencies
+
+# === Python ===
+ai/venv/
+ai/.venv/
+ai/__pycache__/
+ai/**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+.docker/
+
+# === Environment ===
+.env
+.env.local
+.env.*.local
+*.log

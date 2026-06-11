@@ -1,0 +1,1009 @@
+openapi: "3.0.3"
+info:
+  title: AI shot API
+  description: 海外 AI 短剧平台后端 API 接口规范
+  version: "1.0.0"
+  contact:
+    name: AI shot Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.venaitry.com/api/v1
+    description: Production server
+  - url: https://staging-api.venaitry.com/api/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access Token (有效期15分钟)
+
+  schemas:
+    # ========== 通用 ==========
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 0=成功, 非0=错误码
+          example: 0
+        message:
+          type: string
+          example: "success"
+        data:
+          type: object
+          nullable: true
+        meta:
+          type: object
+          nullable: true
+          properties:
+            page:
+              type: integer
+              example: 1
+            page_size:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+
+    PaginationParams:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+        page_size:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+
+    # ========== 用户 ==========
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        nickname:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        role:
+          type: string
+          enum: [user, creator, admin, superadmin]
+        language:
+          type: string
+        region:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - nickname
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT Access Token (15min 有效期)
+        refresh_token:
+          type: string
+          description: Refresh Token (30天 有效期)
+        expires_in:
+          type: integer
+          description: Access Token 过期秒数
+          example: 900
+        user:
+          $ref: '#/components/schemas/User'
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+
+    # ========== 短剧 ==========
+    Drama:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        cover_url:
+          type: string
+          format: uri
+        category_id:
+          type: integer
+        creator:
+          $ref: '#/components/schemas/User'
+        total_episodes:
+          type: integer
+        status:
+          type: string
+          enum: [draft, published, reviewing, archived]
+        tags:
+          type: array
+          items:
+            type: string
+        release_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        view_count:
+          type: integer
+          description: 播放次数
+        like_count:
+          type: integer
+        favorite_count:
+          type: integer
+
+    DramaListParams:
+      type: object
+      properties:
+        category_id:
+          type: integer
+        status:
+          type: string
+          enum: [draft, published, reviewing, archived]
+        sort:
+          type: string
+          enum: [latest, popular, trending]
+          default: latest
+        tags:
+          type: string
+          description: 逗号分隔的标签
+        keyword:
+          type: string
+
+    Episode:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        drama_id:
+          type: integer
+          format: int64
+        episode_no:
+          type: integer
+        title:
+          type: string
+        duration:
+          type: integer
+          description: 时长（秒）
+        video_url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [processing, ready, failed]
+        localizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Localization'
+        created_at:
+          type: string
+          format: date-time
+
+    EpisodePlayInfo:
+      type: object
+      properties:
+        episode:
+          $ref: '#/components/schemas/Episode'
+        play_url:
+          type: string
+          format: uri
+          description: 签名后的播放 URL
+        expires_at:
+          type: string
+          format: date-time
+        qualities:
+          type: array
+          items:
+            $ref: '#/components/schemas/VideoQuality'
+
+    VideoQuality:
+      type: object
+      properties:
+        resolution:
+          type: string
+          example: "720p"
+        url:
+          type: string
+          format: uri
+        bitrate:
+          type: integer
+          description: kbps
+
+    # ========== 本地化 ==========
+    Localization:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        episode_id:
+          type: integer
+          format: int64
+        language:
+          type: string
+        title_translated:
+          type: string
+        dub_url:
+          type: string
+          format: uri
+        subtitle_url:
+          type: string
+          format: uri
+        lip_sync_url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+
+    # ========== 收藏 ==========
+    Favorite:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        drama_id:
+          type: integer
+          format: int64
+        drama:
+          $ref: '#/components/schemas/Drama'
+        created_at:
+          type: string
+          format: date-time
+
+    AddFavoriteRequest:
+      type: object
+      required:
+        - drama_id
+      properties:
+        drama_id:
+          type: integer
+          format: int64
+
+    # ========== 评论 ==========
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/User'
+        drama_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        content:
+          type: string
+        likes_count:
+          type: integer
+        is_liked:
+          type: boolean
+          description: 当前用户是否已点赞
+        created_at:
+          type: string
+          format: date-time
+
+    CreateCommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        parent_id:
+          type: integer
+          format: int64
+          description: 回复评论时传入父评论 ID
+
+    # ========== 订阅 ==========
+    SubscriptionPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: USD
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        plan_type:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, cancelled, expired]
+        auto_renew:
+          type: boolean
+
+    CreateSubscriptionRequest:
+      type: object
+      required:
+        - plan_type
+        - channel
+      properties:
+        plan_type:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        channel:
+          type: string
+          enum: [paypal, stripe, apple_pay, google_pay]
+        return_url:
+          type: string
+          format: uri
+          description: 支付成功后跳转 URL
+
+    # ========== 错误 ==========
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+paths:
+  # ========== 用户认证 ==========
+  /auth/register:
+    post:
+      tags: [认证]
+      summary: 邮箱注册
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        "201":
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        "409":
+          description: 邮箱已存在
+        "400":
+          description: 参数校验失败
+
+  /auth/login:
+    post:
+      tags: [认证]
+      summary: 邮箱密码登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        "401":
+          description: 邮箱或密码错误
+
+  /auth/oauth/{provider}:
+    get:
+      tags: [认证]
+      summary: OAuth 登录跳转
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, apple, facebook]
+      responses:
+        "302":
+          description: 重定向到 OAuth 提供商
+
+  /auth/oauth/{provider}/callback:
+    post:
+      tags: [认证]
+      summary: OAuth 回调
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, apple, facebook]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: OAuth 授权码
+      responses:
+        "200":
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+
+  /auth/refresh:
+    post:
+      tags: [认证]
+      summary: 刷新 Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        "200":
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+
+  /auth/logout:
+    post:
+      tags: [认证]
+      summary: 登出
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: 登出成功
+
+  # ========== 短剧内容 ==========
+  /dramas:
+    get:
+      tags: [短剧]
+      summary: 短剧列表（含推荐/分类筛选）
+      parameters:
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [latest, popular, trending]
+            default: latest
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: 逗号分隔
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 短剧列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Drama'
+
+  /dramas/{id}:
+    get:
+      tags: [短剧]
+      summary: 短剧详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 短剧详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Drama'
+        "404":
+          description: 短剧不存在
+
+  /dramas/{id}/episodes:
+    get:
+      tags: [短剧]
+      summary: 剧集列表
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            description: 短剧 ID
+      responses:
+        "200":
+          description: 剧集列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Episode'
+
+  /episodes/{id}:
+    get:
+      tags: [短剧]
+      summary: 剧集详情含播放地址
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 剧集详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Episode'
+
+  /episodes/{id}/play:
+    get:
+      tags: [短剧]
+      summary: 获取播放 URL（签名）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: quality
+          in: query
+          schema:
+            type: string
+            enum: [1080p, 720p, 480p]
+            default: 720p
+        - name: language
+          in: query
+          schema:
+            type: string
+            description: 语言代码，不传则返回原始音频
+      responses:
+        "200":
+          description: 播放信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/EpisodePlayInfo'
+
+  # ========== 收藏 ==========
+  /favorites:
+    post:
+      tags: [收藏]
+      summary: 添加收藏
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFavoriteRequest'
+      responses:
+        "201":
+          description: 收藏成功
+        "409":
+          description: 已收藏
+    get:
+      tags: [收藏]
+      summary: 收藏列表
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 收藏列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Favorite'
+
+  /favorites/{id}:
+    delete:
+      tags: [收藏]
+      summary: 取消收藏
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: 取消收藏成功
+        "404":
+          description: 收藏不存在
+
+  # ========== 评论 ==========
+  /dramas/{id}/comments:
+    post:
+      tags: [评论]
+      summary: 发布评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            description: 短剧 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        "201":
+          description: 评论成功
+    get:
+      tags: [评论]
+      summary: 评论列表
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            description: 短剧 ID
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [latest, hottest]
+            default: latest
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 评论列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Comment'
+
+  /comments/{id}:
+    delete:
+      tags: [评论]
+      summary: 删除评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: 删除成功
+        "403":
+          description: 无权限
+
+  /comments/{id}/like:
+    post:
+      tags: [评论]
+      summary: 点赞评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          is_liked:
+                            type: boolean
+                          likes_count:
+                            type: integer
+
+  # ========== 支付订阅 ==========
+  /subscriptions/plans:
+    get:
+      tags: [订阅]
+      summary: 订阅计划列表
+      responses:
+        "200":
+          description: 计划列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubscriptionPlan'
+
+  /subscriptions/create:
+    post:
+      tags: [订阅]
+      summary: 创建订阅
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        "200":
+          description: 创建成功，返回支付链接
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          subscription_id:
+                            type: integer
+                          payment_url:
+                            type: string
+                            format: uri
+
+  /subscriptions/cancel:
+    post:
+      tags: [订阅]
+      summary: 取消订阅
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: 取消成功
+
+  /subscriptions/status:
+    get:
+      tags: [订阅]
+      summary: 订阅状态
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: 订阅状态
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Subscription'
+
+  /payments/webhook/{channel}:
+    post:
+      tags: [支付]
+      summary: 支付回调 Webhook
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [paypal, stripe, apple, google]
+      requestBody:
+        content:
+          application/json: {}
+      responses:
+        "200":
+          description: 回调处理成功

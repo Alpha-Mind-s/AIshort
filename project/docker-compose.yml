@@ -1,0 +1,333 @@
+version: "3.8"
+
+name: aishot
+
+services:
+  # ==========================================
+  # API Gateway (Go)
+  # ==========================================
+  api-gateway:
+    image: golang:1.22-alpine
+    container_name: aishot-gateway
+    working_dir: /app
+    volumes:
+      - ../backend/gateway:/app
+    ports:
+      - "8080:8080"
+    command: go run ./cmd/gateway -addr :8080
+    environment:
+      - GIN_MODE=debug
+      - USER_SVC_ADDR=user-service:8081
+      - CONTENT_SVC_ADDR=content-service:8082
+      - VIDEO_SVC_ADDR=video-service:8083
+      - PAYMENT_SVC_ADDR=payment-service:8084
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      redis:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # User & Auth Service (Go)
+  # ==========================================
+  user-service:
+    image: golang:1.22-alpine
+    container_name: aishot-user
+    working_dir: /app
+    volumes:
+      - ../backend/services/user:/app
+    ports:
+      - "8081:8081"
+    command: go run ./cmd/server -addr :8081
+    environment:
+      - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - JWT_SECRET=dev-secret-change-in-production
+      - GOOGLE_CLIENT_ID=
+      - APPLE_CLIENT_ID=
+      - FACEBOOK_CLIENT_ID=
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # Content Service (Go)
+  # ==========================================
+  content-service:
+    image: golang:1.22-alpine
+    container_name: aishot-content
+    working_dir: /app
+    volumes:
+      - ../backend/services/content:/app
+    ports:
+      - "8082:8082"
+    command: go run ./cmd/server -addr :8082
+    environment:
+      - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - ES_ADDR=elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # Video Management Service (Go)
+  # ==========================================
+  video-service:
+    image: golang:1.22-alpine
+    container_name: aishot-video
+    working_dir: /app
+    volumes:
+      - ../backend/services/video:/app
+    ports:
+      - "8083:8083"
+    command: go run ./cmd/server -addr :8083
+    environment:
+      - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - S3_BUCKET=aishot-videos
+      - CDN_URL=http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # Payment Service (Go)
+  # ==========================================
+  payment-service:
+    image: golang:1.22-alpine
+    container_name: aishot-payment
+    working_dir: /app
+    volumes:
+      - ../backend/services/payment:/app
+    ports:
+      - "8084:8084"
+    command: go run ./cmd/server -addr :8084
+    environment:
+      - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - PAYPAL_CLIENT_ID=
+      - PAYPAL_CLIENT_SECRET=
+      - STRIPE_API_KEY=
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # BFF Service (Node.js / Next.js)
+  # ==========================================
+  web-bff:
+    image: node:20-alpine
+    container_name: aishot-web-bff
+    working_dir: /app
+    volumes:
+      - ../frontend/web:/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - API_GATEWAY=http://api-gateway:8080
+      - NODE_ENV=development
+    depends_on:
+      - api-gateway
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # ==========================================
+  # Python AI Services
+  # ==========================================
+  ai-worker:
+    image: python:3.12-slim
+    container_name: aishot-ai-worker
+    working_dir: /app
+    volumes:
+      - ../ai:/app
+    command: sh -c "pip install -r requirements.txt && python worker.py"
+    environment:
+      - DB_DSN=postgres://aishot:aishot@postgres:5432/aishot?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/
+      - OPENAI_API_KEY=
+      - DEEPL_API_KEY=
+      - ELEVENLABS_API_KEY=
+      - WHISPER_MODEL=base
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aishot-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ==========================================
+  # Infrastructure
+  # ==========================================
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: aishot-postgres
+    environment:
+      POSTGRES_DB: aishot
+      POSTGRES_USER: aishot
+      POSTGRES_PASSWORD: aishot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aishot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: aishot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: aishot-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # MinIO (S3-compatible local storage)
+  minio:
+    image: minio/minio:latest
+    container_name: aishot-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - miniodata:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # Elasticsearch
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: aishot-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # Prometheus (monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aishot-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - promdata:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+  # Grafana (visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aishot-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - aishot-net
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  esdata:
+  promdata:
+  grafana-data:
+
+networks:
+  aishot-net:
+    driver: bridge
