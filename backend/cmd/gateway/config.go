@@ -8,10 +8,11 @@ import (
 )
 
 type GatewayConfig struct {
-    Server   config.ServerConfig
-    Redis    config.RedisConfig
-    JWT      config.JWTConfig
-    Services ServiceConfig
+    Server         config.ServerConfig
+    Redis          config.RedisConfig
+    JWT            config.JWTConfig
+    Services       ServiceConfig
+    InternalApiKey string
 }
 
 type ServiceConfig struct {
@@ -32,6 +33,7 @@ func LoadConfig() *GatewayConfig {
         VideoSvcAddr:   getEnv("VIDEO_SVC_ADDR", "localhost:8083"),
         PaymentSvcAddr: getEnv("PAYMENT_SVC_ADDR", "localhost:8084"),
     }
+    cfg.InternalApiKey = getEnv("INTERNAL_API_KEY", "dev-internal-key")
     return cfg
 }
 
