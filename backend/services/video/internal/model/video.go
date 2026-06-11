@@ -11,7 +11,7 @@ type UploadURLRequest struct {
 type UploadURLResponse struct {
 	UploadURL   string `json:"upload_url"`
 	DownloadURL string `json:"download_url"`
-	ExpiresAt   int64  `json:"expires_at"`
+	ExpiresIn   int64  `json:"expires_in"`
 }
 
 type MultipartInitRequest struct {
