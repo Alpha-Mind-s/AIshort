@@ -21,10 +21,10 @@ class Settings(BaseSettings):
     REDIS_ADDR: str = "redis://localhost:6379"
     RABBITMQ_ADDR: str = "amqp://guest:guest@localhost:5672/"
 
-    # --- API 密钥 ---
+    # --- API 密钥（留空，在 .env 中填写）---
     OPENAI_API_KEY: str = ""
-    LLM_BASE_URL: str = ""        # 自定义 LLM 端点（留空=OpenAI 官方）
-    LLM_MODEL: str = "gpt-4o-mini"  # 翻译模型（性价比高）
+    LLM_BASE_URL: str = ""
+    LLM_MODEL: str = "gpt-4o-mini"
     ELEVENLABS_API_KEY: str = ""
 
     # --- Whisper 模型 ---
