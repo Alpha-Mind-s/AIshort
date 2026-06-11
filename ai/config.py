@@ -40,8 +40,6 @@ class Settings(BaseSettings):
     # --- 队列名称 ---
     QUEUE_ASR: str = "ai:asr"
     QUEUE_TRANSLATE: str = "ai:translate"
-    QUEUE_DUBBING: str = "ai:dubbing"
-    QUEUE_LIPSYNC: str = "ai:lipsync"
 
     # --- API Gateway ---
     API_GATEWAY_URL: str = "http://localhost:8080/api/v1"
