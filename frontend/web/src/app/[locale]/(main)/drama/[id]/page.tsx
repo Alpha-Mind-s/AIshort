@@ -34,6 +34,7 @@ export default async function DramaDetailPage({ params }: Props) {
             src={drama.cover_url}
             alt={drama.title}
             fill
+            sizes="100vw"
             className="object-cover opacity-50"
           />
         )}
@@ -49,6 +50,7 @@ export default async function DramaDetailPage({ params }: Props) {
               src={drama.cover_url}
               alt={drama.title}
               fill
+              sizes="(max-width: 768px) 144px, 176px"
               className="object-cover"
               priority
             />

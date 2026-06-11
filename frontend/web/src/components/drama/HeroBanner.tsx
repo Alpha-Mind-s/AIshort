@@ -20,6 +20,7 @@ export function HeroBanner({ drama }: HeroBannerProps) {
         alt={drama.title}
         fill
         priority
+        sizes="100vw"
         className="object-cover"
       />
       {/* Gradient overlay */}
