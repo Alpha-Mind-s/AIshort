@@ -425,6 +425,83 @@ components:
           format: uri
           description: 支付成功后跳转 URL
 
+    # ========== AI Internal ==========
+    AIJobStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        result_meta:
+          type: object
+          description: 完成时的结果元数据 (JSONB)
+          nullable: true
+        error_message:
+          type: string
+          description: 失败时的错误信息
+          nullable: true
+
+    LocalizationUpsert:
+      type: object
+      required:
+        - language
+      properties:
+        language:
+          type: string
+          description: 语言代码 (en/es/pt/ja/ko)
+        subtitle_url:
+          type: string
+          format: uri
+          nullable: true
+        title_translated:
+          type: string
+          nullable: true
+        dub_url:
+          type: string
+          format: uri
+          nullable: true
+        lip_sync_url:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          type: string
+          enum: [completed, failed]
+          default: completed
+
+    AIJob:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        episode_id:
+          type: integer
+          format: int64
+        job_type:
+          type: string
+          enum: [asr, translate, dubbing, lipsync]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        input_meta:
+          type: object
+          description: 任务输入参数
+        result_meta:
+          type: object
+          description: 任务结果元数据
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        retry_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
     # ========== 错误 ==========
     ApiError:
       type: object
@@ -1007,3 +1084,127 @@ paths:
       responses:
         "200":
           description: 回调处理成功
+
+  # ========== AI Internal（AI Worker → 后端回调）==========
+  /internal/ai/jobs/{job_id}/status:
+    put:
+      tags: [AI Internal]
+      summary: 更新 AI 任务状态
+      description: AI Worker 回调此接口更新 ai_jobs 表状态。需要在 Gateway 层验证 Internal API Key。
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIJobStatusUpdate'
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+        "404":
+          description: 任务不存在
+
+  /internal/episodes/{episode_id}/localization:
+    put:
+      tags: [AI Internal]
+      summary: 写入/更新本地化结果
+      description: AI Worker 每个管线阶段完成后回调，增量更新 localizations 表。
+      parameters:
+        - name: episode_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocalizationUpsert'
+      responses:
+        "200":
+          description: 写入成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Localization'
+        "404":
+          description: 剧集不存在
+
+  /internal/episodes/{episode_id}:
+    get:
+      tags: [AI Internal]
+      summary: 查询剧集信息（内部接口）
+      description: AI Worker 内部查询剧集元数据（含原始视频 URL）。
+      parameters:
+        - name: episode_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 剧集信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Episode'
+        "404":
+          description: 剧集不存在
+
+  /internal/ai/jobs:
+    get:
+      tags: [AI Internal]
+      summary: 查询待处理任务
+      description: AI Worker 启动时调用，恢复异常中断的任务。
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            description: 任务状态（逗号分隔），如 "pending,processing"
+        - name: job_type
+          in: query
+          schema:
+            type: string
+            enum: [asr, translate, dubbing, lipsync]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AIJob'
