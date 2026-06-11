@@ -50,3 +50,16 @@ func JWTAuth(jwtAuth *auth.JWTAuth, rdb *redis.Client) gin.HandlerFunc {
         c.Next()
     }
 }
+
+// InternalAPIKey validates the X-Internal-Api-Key header against the configured key.
+func InternalAPIKey(apiKey string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        key := c.GetHeader("X-Internal-Api-Key")
+        if key == "" || key != apiKey {
+            response.Error(c, http.StatusUnauthorized, pkgErr.ErrUnauthorized.Code, pkgErr.ErrUnauthorized.Message)
+            c.Abort()
+            return
+        }
+        c.Next()
+    }
+}
