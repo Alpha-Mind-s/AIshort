@@ -25,7 +25,7 @@ func (r *UserRepository) Create(ctx context.Context, user *model.User) error {
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
-	query := `SELECT id, email, nickname, avatar_url, password_hash, role, language, region, status, created_at, updated_at
+	query := `SELECT id, email, nickname, COALESCE(avatar_url, ''), password_hash, role, COALESCE(language, ''), COALESCE(region, ''), status, created_at, updated_at
 			  FROM users WHERE email = $1`
 	user := &model.User{}
 	err := r.pool.QueryRow(ctx, query, email).Scan(
@@ -40,7 +40,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id int64) (*model.User, error) {
-	query := `SELECT id, email, nickname, avatar_url, password_hash, role, language, region, status, created_at, updated_at
+	query := `SELECT id, email, nickname, COALESCE(avatar_url, ''), password_hash, role, COALESCE(language, ''), COALESCE(region, ''), status, created_at, updated_at
 			  FROM users WHERE id = $1`
 	user := &model.User{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -61,7 +61,7 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, user *model.User) er
 }
 
 func (r *UserRepository) FindByOAuth(ctx context.Context, provider, oauthID string) (*model.User, error) {
-	query := `SELECT id, email, nickname, avatar_url, role, language, region, status, created_at, updated_at
+	query := `SELECT id, email, nickname, COALESCE(avatar_url, ''), role, COALESCE(language, ''), COALESCE(region, ''), status, created_at, updated_at
 			  FROM users WHERE oauth_provider=$1 AND oauth_id=$2`
 	user := &model.User{}
 	err := r.pool.QueryRow(ctx, query, provider, oauthID).Scan(
