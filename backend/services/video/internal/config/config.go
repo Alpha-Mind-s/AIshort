@@ -17,6 +17,7 @@ type S3Config struct {
 	Bucket    string
 	AccessKey string
 	SecretKey string
+	UseSSL    bool
 	CDNURL    string
 }
 
@@ -28,6 +29,7 @@ func Load() *Config {
 	cfg.S3.Bucket = getEnv("S3_BUCKET", "aishot-videos")
 	cfg.S3.AccessKey = getEnv("S3_ACCESS_KEY", "minioadmin")
 	cfg.S3.SecretKey = getEnv("S3_SECRET_KEY", "minioadmin")
+	cfg.S3.UseSSL = getEnv("S3_USE_SSL", "false") == "true"
 	cfg.S3.CDNURL = getEnv("CDN_URL", "http://localhost:8080")
 	return cfg
 }
