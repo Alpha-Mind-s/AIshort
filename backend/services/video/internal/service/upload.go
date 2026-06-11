@@ -57,6 +57,7 @@ func (s *UploadService) GetUploadURL(ctx context.Context, req *model.UploadURLRe
 	})
 
 	return &model.UploadURLResponse{
+		UploadID:    uploadID,
 		UploadURL:   presignedURL.String(),
 		DownloadURL: downloadURL,
 		ExpiresIn:   3600,
@@ -64,7 +65,12 @@ func (s *UploadService) GetUploadURL(ctx context.Context, req *model.UploadURLRe
 }
 
 func (s *UploadService) CompleteUpload(ctx context.Context, repo *UploadRepo, req *model.UploadCompleteRequest) (*model.UploadCompleteResponse, error) {
-	videoURL := fmt.Sprintf("%s/%s/%s", s.cdnURL, s.bucket, req.UploadID)
+	sessionRaw, ok := s.sessions.Load(req.UploadID)
+	if !ok {
+		return nil, fmt.Errorf("upload session not found: %s", req.UploadID)
+	}
+	session := sessionRaw.(*model.UploadSession)
+	videoURL := fmt.Sprintf("%s/%s/%s", s.cdnURL, s.bucket, session.ObjectKey)
 
 	if err := repo.ProcessUpload(ctx, req.EpisodeID, videoURL, req.FileSize, req.Duration); err != nil {
 		return nil, fmt.Errorf("process upload complete: %w", err)

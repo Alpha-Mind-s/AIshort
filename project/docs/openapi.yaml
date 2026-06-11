@@ -371,6 +371,13 @@ components:
           type: integer
           format: int64
           description: 上传关联的剧集 ID
+        duration:
+          type: integer
+          description: 视频时长（秒）
+        file_size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
         parts:
           type: array
           description: 分片上传的 Part 列表（分片模式必传）
