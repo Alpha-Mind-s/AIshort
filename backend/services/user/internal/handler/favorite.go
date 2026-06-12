@@ -87,5 +87,5 @@ func (h *FavoriteHandler) Delete(c *gin.Context) {
         return
     }
 
-    c.Status(http.StatusNoContent)
+    response.OK(c, nil)
 }

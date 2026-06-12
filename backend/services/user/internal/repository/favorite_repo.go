@@ -2,6 +2,7 @@ package repository
 
 import (
     "context"
+    "encoding/json"
 
     "github.com/jackc/pgx/v5/pgxpool"
     "github.com/ai-shot/user-svc/internal/model"
@@ -33,8 +34,14 @@ func (r *FavoriteRepository) FindByUser(ctx context.Context, userID int64, page,
     }
 
     offset := (page - 1) * pageSize
-    rows, err := r.pool.Query(ctx,
-        "SELECT id, user_id, drama_id, created_at FROM favorites WHERE user_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+    rows, err := r.pool.Query(ctx, `
+        SELECT f.id, f.user_id, f.drama_id, f.created_at,
+               d.id, d.title, COALESCE(d.cover_url,''), COALESCE(d.description,''), d.total_episodes,
+               COALESCE(d.tags, '[]'::jsonb)
+        FROM favorites f
+        LEFT JOIN dramas d ON d.id = f.drama_id
+        WHERE f.user_id=$1
+        ORDER BY f.created_at DESC LIMIT $2 OFFSET $3`,
         userID, pageSize, offset)
     if err != nil {
         return nil, 0, err
@@ -44,9 +51,16 @@ func (r *FavoriteRepository) FindByUser(ctx context.Context, userID int64, page,
     var favorites []*model.Favorite
     for rows.Next() {
         f := &model.Favorite{}
-        if err := rows.Scan(&f.ID, &f.UserID, &f.DramaID, &f.CreatedAt); err != nil {
+        f.Drama = &model.DramaSummary{}
+        var tags []byte
+        if err := rows.Scan(
+            &f.ID, &f.UserID, &f.DramaID, &f.CreatedAt,
+            &f.Drama.ID, &f.Drama.Title, &f.Drama.CoverURL, &f.Drama.Description, &f.Drama.TotalEpisodes,
+            &tags,
+        ); err != nil {
             return nil, 0, err
         }
+        json.Unmarshal(tags, &f.Drama.Tags)
         favorites = append(favorites, f)
     }
     return favorites, total, nil

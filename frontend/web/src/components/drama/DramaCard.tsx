@@ -57,7 +57,7 @@ export function DramaCard({ drama }: DramaCardProps) {
           <span>{drama.category_id}</span>
           <span>{formatCount(drama.view_count)} views</span>
         </div>
-        {drama.tags.length > 0 && (
+        {drama.tags?.length > 0 && (
           <div className="flex gap-1 flex-wrap">
             {drama.tags.slice(0, 2).map((tag) => (
               <span
