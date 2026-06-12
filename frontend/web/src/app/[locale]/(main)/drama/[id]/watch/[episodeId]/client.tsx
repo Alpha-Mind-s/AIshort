@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { QualitySelector } from "@/components/video/QualitySelector";
 import { SubtitleSelector } from "@/components/video/SubtitleSelector";
 import { EpisodeNavigation } from "@/components/video/EpisodeNavigation";
+import { BackButton } from "@/components/ui/BackButton";
 import { getEpisodePlay } from "@/lib/api/drama";
 import type { Episode, EpisodePlayInfo } from "@/lib/api/drama";
 import { getSubscriptionStatus, type Subscription } from "@/lib/api/subscriptions";
@@ -123,6 +124,10 @@ export function WatchPageClient({
         {/* Controls bar */}
         <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800">
           <div className="flex items-center gap-2 text-white text-sm font-medium truncate">
+            <BackButton
+              fallbackHref={`/drama/${dramaId}`}
+              className="text-zinc-400 hover:text-white mr-1"
+            />
             <span className="text-zinc-400">{dramaTitle}</span>
             <span className="text-zinc-600">/</span>
             <span>

@@ -4,6 +4,7 @@ import type { Drama, Episode } from "@/lib/api/drama";
 import { EpisodeList } from "@/components/drama/EpisodeList";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { CommentSection } from "@/components/comment/CommentSection";
+import { BackButton } from "@/components/ui/BackButton";
 import { formatDate, formatCount } from "@/lib/utils/format";
 import { getImageUrl } from "@/lib/utils/image-url";
 import { notFound } from "next/navigation";
@@ -61,6 +62,11 @@ export default async function DramaDetailPage({ params }: Props) {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-20 relative z-10">
+        {/* Back navigation */}
+        <div className="mb-4">
+          <BackButton fallbackHref="/" label="Back" />
+        </div>
+
         {/* Title and info */}
         <div className="flex flex-col md:flex-row gap-6">
           {/* Cover poster */}
