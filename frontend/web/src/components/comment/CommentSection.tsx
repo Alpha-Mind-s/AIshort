@@ -67,29 +67,42 @@ export function CommentSection({ dramaId }: CommentSectionProps) {
           No comments yet. Be the first to share your thoughts!
         </p>
       ) : (
-        <div className="space-y-4">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              onLike={likeComment}
-              onDelete={deleteComment}
-              onReply={(content, parentId) =>
-                addComment(content + " (reply)")
-              }
-              isAddingReply={isAdding}
-            />
-          ))}
-
-          {/* Load more */}
-          {hasMore && (
-            <button
-              onClick={loadMore}
-              className="w-full py-2 text-sm text-primary hover:opacity-80 transition-opacity"
-            >
-              {t("load_more")}
-            </button>
-          )}
+        <div className="space-y-3">
+          {/* TikTok-style flat comment list: no nesting, replies show "回复 @username" */}
+          {(() => {
+            const commentMap = new Map(comments.map((c) => [c.id, c]));
+            return (
+              <>
+                {comments.map((comment) => {
+                  const parentComment = comment.parent_id
+                    ? commentMap.get(comment.parent_id)
+                    : undefined;
+                  return (
+                    <CommentItem
+                      key={comment.id}
+                      comment={comment}
+                      parentNickname={parentComment?.user?.nickname}
+                      onLike={likeComment}
+                      onDelete={deleteComment}
+                      onReply={(content, parentId) =>
+                        addComment(content, parentId)
+                      }
+                      isAddingReply={isAdding}
+                    />
+                  );
+                })}
+                {/* Load more */}
+                {hasMore && (
+                  <button
+                    onClick={loadMore}
+                    className="w-full py-2 text-sm text-primary hover:opacity-80 transition-opacity"
+                  >
+                    {t("load_more")}
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

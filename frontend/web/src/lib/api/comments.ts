@@ -27,7 +27,10 @@ export async function createComment(
 ): Promise<Comment> {
   const res = await apiFetch<Comment>(`/dramas/${dramaId}/comments`, {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      content: data.content,
+      parent_id: data.parent_id ?? null,
+    }),
   });
   return res.data;
 }

@@ -83,6 +83,7 @@
     "title": "Comments",
     "post": "Post Comment",
     "reply": "Reply",
+    "reply_to": "↳ {name}",
     "delete": "Delete",
     "like": "Like",
     "placeholder": "Share your thoughts...",

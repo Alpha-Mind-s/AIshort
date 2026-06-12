@@ -16,6 +16,8 @@ interface CommentItemProps {
   onReply: (content: string, parentId: number) => void;
   isAddingReply: boolean;
   depth?: number;
+  /** Nickname of the parent comment author (TikTok-style flat display) */
+  parentNickname?: string;
 }
 
 export function CommentItem({
@@ -25,6 +27,7 @@ export function CommentItem({
   onReply,
   isAddingReply,
   depth = 0,
+  parentNickname,
 }: CommentItemProps) {
   const t = useTranslations("comment");
   const user = useAuthStore((s) => s.user);
@@ -35,12 +38,7 @@ export function CommentItem({
   const hasReplies = false; // Simplified — real API would have `replies` field
 
   return (
-    <div
-      className={cn(
-        "space-y-2",
-        depth > 0 && "ml-8 pl-4 border-l-2 border-muted"
-      )}
-    >
+    <div className="space-y-2">
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
@@ -53,6 +51,12 @@ export function CommentItem({
             <span className="text-sm font-semibold">
               {comment.user?.nickname ?? 'Anonymous'}
             </span>
+            {/* TikTok-style reply badge */}
+            {parentNickname && (
+              <span className="text-xs text-primary">
+                {t("reply_to", { name: parentNickname })}
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">
               {timeAgo(comment.created_at)}
             </span>

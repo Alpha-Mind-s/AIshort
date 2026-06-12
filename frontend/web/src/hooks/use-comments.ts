@@ -20,8 +20,8 @@ export function useComments(dramaId: number) {
   const meta = data?.meta;
 
   const addMutation = useMutation({
-    mutationFn: (content: string) =>
-      createComment(dramaId, { content }),
+    mutationFn: ({ content, parentId }: { content: string; parentId?: number }) =>
+      createComment(dramaId, { content, parent_id: parentId ?? null }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", dramaId] });
       toast.success("Comment posted");
@@ -56,7 +56,8 @@ export function useComments(dramaId: number) {
     isLoading,
     sort,
     setSort: (s: "latest" | "hottest") => { setSort(s); setPage(1); },
-    addComment: addMutation.mutate,
+    addComment: (content: string, parentId?: number) =>
+      addMutation.mutate({ content, parentId }),
     isAdding: addMutation.isPending,
     deleteComment: deleteMutation.mutate,
     likeComment: likeMutation.mutate,
