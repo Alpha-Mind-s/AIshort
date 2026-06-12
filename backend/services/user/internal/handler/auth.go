@@ -66,8 +66,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("user_id")
-	tokens, err := h.authSvc.RefreshToken(c.Request.Context(), userID, req.RefreshToken)
+	// The refresh token itself identifies the user — no need for a separate user_id.
+	tokens, err := h.authSvc.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
 		if appErr := pkgErr.AsAppError(err); appErr != nil {
 			response.Error(c, appErr.HTTPStatus, appErr.Code, appErr.Message)

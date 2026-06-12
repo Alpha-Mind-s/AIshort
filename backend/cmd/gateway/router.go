@@ -50,7 +50,9 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 		{
 			auth.POST("/register", proxyTo(cfg.Services.UserSvcAddr))
 			auth.POST("/login", proxyTo(cfg.Services.UserSvcAddr))
-			auth.POST("/refresh", authMiddleware, proxyTo(cfg.Services.UserSvcAddr))
+			// /refresh is a public endpoint — it authenticates via the refresh_token in the
+			// request body, not via the (already expired) access token in the Authorization header.
+			auth.POST("/refresh", proxyTo(cfg.Services.UserSvcAddr))
 			auth.POST("/logout", authMiddleware, proxyTo(cfg.Services.UserSvcAddr))
 
 			// OAuth — proxy to user-service

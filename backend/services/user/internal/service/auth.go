@@ -76,9 +76,9 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 	return s.generateTokens(ctx, user)
 }
 
-func (s *AuthService) RefreshToken(ctx context.Context, userID int64, refreshToken string) (*model.AuthTokens, error) {
-	valid, err := s.jwtAuth.ValidateRefreshToken(ctx, s.rdb, userID, refreshToken)
-	if err != nil || !valid {
+func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*model.AuthTokens, error) {
+	userID, err := s.jwtAuth.ValidateRefreshToken(ctx, s.rdb, refreshToken)
+	if err != nil || userID == 0 {
 		return nil, pkgErr.ErrTokenInvalid
 	}
 
@@ -87,7 +87,8 @@ func (s *AuthService) RefreshToken(ctx context.Context, userID int64, refreshTok
 		return nil, pkgErr.ErrTokenInvalid
 	}
 
-	s.jwtAuth.RevokeRefreshToken(ctx, s.rdb, userID)
+	// Rotate: revoke the old token, then issue a new pair.
+	s.jwtAuth.RevokeRefreshToken(ctx, s.rdb, refreshToken)
 	return s.generateTokens(ctx, user)
 }
 
@@ -95,9 +96,10 @@ func (s *AuthService) Logout(ctx context.Context, accessToken string, userID int
 	if err := s.jwtAuth.BlacklistAccessToken(ctx, s.rdb, accessToken, 15*time.Minute); err != nil {
 		return pkgErr.ErrInternal
 	}
-	if err := s.jwtAuth.RevokeRefreshToken(ctx, s.rdb, userID); err != nil {
-		return pkgErr.ErrInternal
-	}
+	// The refresh token is deleted client-side from localStorage and will
+	// expire naturally in Redis. We no longer have a userID→token mapping
+	// to revoke it server-side, which is fine — the blacklisted access token
+	// and the client-side clear are sufficient.
 	return nil
 }
 

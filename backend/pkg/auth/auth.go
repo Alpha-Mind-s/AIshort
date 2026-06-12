@@ -3,11 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	goredis "github.com/redis/go-redis/v9"
+
 	"github.com/ai-shot/pkg/config"
 )
 
@@ -75,25 +77,33 @@ func (a *JWTAuth) ValidateAccessToken(tokenString string) (*AccessClaims, error)
 
 func (a *JWTAuth) GenerateRefreshToken(ctx context.Context, rdb *goredis.Client, userID int64) (string, error) {
 	token := uuid.New().String()
-	key := fmt.Sprintf("refresh:%d", userID)
+	key := fmt.Sprintf("refresh_token:%s", token)
 
-	if err := rdb.Set(ctx, key, token, a.refreshTTL).Err(); err != nil {
+	// Store userID under the token key so we can look up the user
+	// without knowing their ID ahead of time (required for the refresh
+	// flow where the expired access token can't provide the user ID).
+	if err := rdb.Set(ctx, key, userID, a.refreshTTL).Err(); err != nil {
 		return "", fmt.Errorf("store refresh token: %w", err)
 	}
 
 	return token, nil
 }
 
-func (a *JWTAuth) ValidateRefreshToken(ctx context.Context, rdb *goredis.Client, userID int64, token string) (bool, error) {
-	key := fmt.Sprintf("refresh:%d", userID)
-	stored, err := rdb.Get(ctx, key).Result()
+// ValidateRefreshToken returns the user ID for a valid refresh token, or 0 if invalid.
+func (a *JWTAuth) ValidateRefreshToken(ctx context.Context, rdb *goredis.Client, token string) (int64, error) {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	val, err := rdb.Get(ctx, key).Result()
 	if err == goredis.Nil {
-		return false, nil
+		return 0, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("get refresh token: %w", err)
+		return 0, fmt.Errorf("get refresh token: %w", err)
 	}
-	return stored == token, nil
+	userID, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse user id from refresh token: %w", err)
+	}
+	return userID, nil
 }
 
 func (a *JWTAuth) BlacklistAccessToken(ctx context.Context, rdb *goredis.Client, tokenString string, ttl time.Duration) error {
@@ -113,7 +123,7 @@ func (a *JWTAuth) IsBlacklisted(ctx context.Context, rdb *goredis.Client, tokenS
 	return true, nil
 }
 
-func (a *JWTAuth) RevokeRefreshToken(ctx context.Context, rdb *goredis.Client, userID int64) error {
-	key := fmt.Sprintf("refresh:%d", userID)
+func (a *JWTAuth) RevokeRefreshToken(ctx context.Context, rdb *goredis.Client, token string) error {
+	key := fmt.Sprintf("refresh_token:%s", token)
 	return rdb.Del(ctx, key).Err()
 }

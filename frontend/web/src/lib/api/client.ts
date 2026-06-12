@@ -36,31 +36,43 @@ export class ApiError extends Error {
 
 let _getAccessToken: (() => string | null) | null = null;
 let _onRefreshFailed: (() => void) | null = null;
+let _onRefreshSuccess: ((accessToken: string, refreshToken: string) => void) | null = null;
 
 /** Register auth callbacks — called once from the auth store */
 export function configureAuth(options: {
   getAccessToken: () => string | null;
   onRefreshFailed: () => void;
+  onRefreshSuccess: (accessToken: string, refreshToken: string) => void;
 }) {
   _getAccessToken = options.getAccessToken;
   _onRefreshFailed = options.onRefreshFailed;
+  _onRefreshSuccess = options.onRefreshSuccess;
 }
 
 // ---- client ----
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return null;
+
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        refresh_token: localStorage.getItem("refresh_token"),
-      }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     });
     if (!res.ok) return null;
-    const json: ApiResponse<{ access_token: string; expires_in: number }> =
-      await res.json();
-    if (json.code !== 0) return null;
+    const json: ApiResponse<{
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    }> = await res.json();
+    if (json.code !== 0 || !json.data?.access_token) return null;
+
+    // Persist the new token pair so subsequent requests use the fresh tokens.
+    localStorage.setItem("refresh_token", json.data.refresh_token);
+    _onRefreshSuccess?.(json.data.access_token, json.data.refresh_token);
+
     return json.data.access_token;
   } catch {
     return null;
