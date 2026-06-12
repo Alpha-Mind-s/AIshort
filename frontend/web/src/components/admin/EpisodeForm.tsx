@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@/lib/auth/schemas";
-import { VideoUploader } from "./VideoUploader";
+import { VideoUploader, type UploadInfo } from "./VideoUploader";
 import { X, Plus } from "lucide-react";
+import { completeUpload } from "@/lib/api/drama";
 
 const episodeFormSchema = z.object({
   episode_no: z.number().min(1, "Episode number is required"),
@@ -26,7 +27,7 @@ export type EpisodeFormData = z.infer<typeof episodeFormSchema>;
 interface EpisodeFormProps {
   defaultValues?: Partial<EpisodeFormData>;
   nextEpisodeNo: number;
-  onSubmit: (data: EpisodeFormData) => Promise<void>;
+  onSubmit: (data: EpisodeFormData, uploadInfo: UploadInfo) => Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -65,11 +66,11 @@ export function EpisodeForm({
     },
   });
 
+  const [uploadInfo, setUploadInfo] = useState<UploadInfo | null>(null);
   const { fields, append, remove } = useFieldArray({ control, name: "subtitles" });
-  const videoUrl = watch("video_url");
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit((data) => onSubmit(data, uploadInfo!))} className="space-y-6">
       {/* Episode number */}
       <div>
         <label className="block text-sm font-medium mb-1">{t("episode_no")}</label>
@@ -113,10 +114,11 @@ export function EpisodeForm({
       <div>
         <label className="block text-sm font-medium mb-2">{t("upload_video")}</label>
         <VideoUploader
-          value={videoUrl || undefined}
-          onChange={(url, duration) => {
-            setValue("video_url", url);
-            setValue("duration", duration || 120);
+          value={uploadInfo?.download_url}
+          onChange={(info) => {
+            setUploadInfo(info);
+            setValue("video_url", info.download_url || "pending");
+            setValue("duration", 120);
           }}
         />
         {errors.video_url && (

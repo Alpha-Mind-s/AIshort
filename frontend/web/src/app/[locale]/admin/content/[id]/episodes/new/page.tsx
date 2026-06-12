@@ -3,8 +3,9 @@
 import { useParams } from "next/navigation";
 import { useRouter } from "@/lib/i18n/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getDramaDetail, createEpisode, type CreateEpisodeInput } from "@/lib/api/drama";
+import { getDramaDetail, createEpisode, completeUpload, type CreateEpisodeInput } from "@/lib/api/drama";
 import { EpisodeForm, type EpisodeFormData } from "@/components/admin/EpisodeForm";
+import type { UploadInfo } from "@/components/admin/VideoUploader";
 import { toast } from "sonner";
 import { Link } from "@/lib/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -22,7 +23,29 @@ export default function AddEpisodePage() {
   const nextEpisodeNo = (drama?.total_episodes ?? 0) + 1;
 
   const mutation = useMutation({
-    mutationFn: (data: CreateEpisodeInput) => createEpisode(dramaId, data),
+    mutationFn: async ({ formData, uploadInfo }: { formData: EpisodeFormData; uploadInfo: UploadInfo }) => {
+      // 1. Create episode first → get episode_id
+      const episode = await createEpisode(dramaId, {
+        episode_no: formData.episode_no,
+        title: formData.title,
+        duration: formData.duration,
+        video_url: formData.video_url,
+        subtitle_files: formData.subtitles.length > 0
+          ? formData.subtitles.map((s) => ({ language: s.language, url: s.url }))
+          : undefined,
+      });
+
+      // 2. Complete upload with episode_id → triggers transcode + AI jobs
+      if (uploadInfo.upload_id) {
+        await completeUpload({
+          upload_id: uploadInfo.upload_id,
+          episode_id: episode.id,
+          file_size: uploadInfo.file_size,
+        });
+      }
+
+      return episode;
+    },
     onSuccess: () => {
       toast.success("Episode added");
       router.push(`/admin/content/${dramaId}`);
@@ -53,16 +76,8 @@ export default function AddEpisodePage() {
 
       <EpisodeForm
         nextEpisodeNo={nextEpisodeNo}
-        onSubmit={async (data: EpisodeFormData) => {
-          await mutation.mutateAsync({
-            episode_no: data.episode_no,
-            title: data.title,
-            duration: data.duration,
-            video_url: data.video_url,
-            subtitle_files: data.subtitles.length > 0
-              ? data.subtitles.map((s) => ({ language: s.language, url: s.url }))
-              : undefined,
-          });
+        onSubmit={async (formData: EpisodeFormData, uploadInfo: UploadInfo) => {
+          await mutation.mutateAsync({ formData, uploadInfo });
         }}
         isSubmitting={mutation.isPending}
       />

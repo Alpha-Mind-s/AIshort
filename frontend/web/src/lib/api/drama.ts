@@ -250,6 +250,8 @@ export interface UploadUrlResponse {
 
 export interface UploadCompleteRequest {
   upload_id: string;
+  episode_id: number;
+  file_size?: number;
   parts?: { part_number: number; etag: string }[];
 }
 

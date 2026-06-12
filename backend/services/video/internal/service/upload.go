@@ -135,12 +135,9 @@ func (s *UploadService) CompleteUpload(ctx context.Context, repo *UploadRepo, re
 
 	videoURL := fmt.Sprintf("%s/%s/%s", s.cdnURL, s.bucket, session.ObjectKey)
 
-	// If episode_id is provided, process the upload (DB records, AI jobs).
-	// If not (video uploaded before episode creation), just validate and return the URL.
-	if req.EpisodeID > 0 {
-		if err := repo.ProcessUpload(ctx, req.EpisodeID, videoURL, req.FileSize, req.Duration); err != nil {
-			return nil, fmt.Errorf("process upload complete: %w", err)
-		}
+	// Process the upload: update episode status, create AI jobs
+	if err := repo.ProcessUpload(ctx, req.EpisodeID, videoURL, req.FileSize, req.Duration); err != nil {
+		return nil, fmt.Errorf("process upload complete: %w", err)
 	}
 
 	// Clean up the session
@@ -151,38 +148,36 @@ func (s *UploadService) CompleteUpload(ctx context.Context, repo *UploadRepo, re
 		duration = *req.Duration
 	}
 
-	// Trigger async transcoding only if we have an episode to link the result to.
-	if req.EpisodeID > 0 {
-		sourceKey := session.ObjectKey
-		episodeID := req.EpisodeID
-		cdnURL := s.cdnURL
-		bucket := s.bucket
-		go func() {
-			bgCtx := context.Background()
-			newKey, err := s.transcode.Transcode(bgCtx, sourceKey, episodeID)
-			if err != nil {
-				logger.Error().Err(err).
-					Int64("episode_id", episodeID).
-					Str("source_key", sourceKey).
-					Msg("transcode failed — keeping original video")
-				return
-			}
-
-			transcodedURL := fmt.Sprintf("%s/%s/%s", cdnURL, bucket, newKey)
-			if err := repo.UpdateEpisodeURL(bgCtx, episodeID, transcodedURL); err != nil {
-				logger.Error().Err(err).
-					Int64("episode_id", episodeID).
-					Str("transcoded_url", transcodedURL).
-					Msg("failed to update episode URL after transcode")
-				return
-			}
-
-			logger.Info().
+	// Async transcode to H.264+AAC for browser compatibility
+	sourceKey := session.ObjectKey
+	episodeID := req.EpisodeID
+	cdnURL := s.cdnURL
+	bucket := s.bucket
+	go func() {
+		bgCtx := context.Background()
+		newKey, err := s.transcode.Transcode(bgCtx, sourceKey, episodeID)
+		if err != nil {
+			logger.Error().Err(err).
 				Int64("episode_id", episodeID).
-				Str("new_url", transcodedURL).
-				Msg("episode updated with transcoded video URL")
-		}()
-	}
+				Str("source_key", sourceKey).
+				Msg("transcode failed — keeping original video")
+			return
+		}
+
+		transcodedURL := fmt.Sprintf("%s/%s/%s", cdnURL, bucket, newKey)
+		if err := repo.UpdateEpisodeURL(bgCtx, episodeID, transcodedURL); err != nil {
+			logger.Error().Err(err).
+				Int64("episode_id", episodeID).
+				Str("transcoded_url", transcodedURL).
+				Msg("failed to update episode URL after transcode")
+			return
+		}
+
+		logger.Info().
+			Int64("episode_id", episodeID).
+			Str("new_url", transcodedURL).
+			Msg("episode updated with transcoded video URL")
+	}()
 
 	return &model.UploadCompleteResponse{
 		VideoURL: videoURL,

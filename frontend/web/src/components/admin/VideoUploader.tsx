@@ -4,11 +4,18 @@ import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Upload, FileVideo, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { getUploadUrl, completeUpload } from "@/lib/api/drama";
+import { getUploadUrl } from "@/lib/api/drama";
+
+export interface UploadInfo {
+  upload_id: string;
+  download_url: string;
+  file_size: number;
+  content_type: string;
+}
 
 interface VideoUploaderProps {
   value?: string; // current video_url
-  onChange: (videoUrl: string, duration: number) => void;
+  onChange: (uploadInfo: UploadInfo) => void;
 }
 
 type UploadPhase = "idle" | "selecting" | "uploading" | "done" | "error";
@@ -86,12 +93,13 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
           xhr.send(file);
         });
 
-        // 3. Complete upload — notify backend to process the video
-        const result = await completeUpload({
+        // 3. Notify parent with upload info (completeUpload is called after episode creation)
+        onChange({
           upload_id: uploadInfo.upload_id,
+          download_url: uploadInfo.download_url,
+          file_size: file.size,
+          content_type: file.type,
         });
-
-        onChange(result.video_url, result.duration);
         setPhase("done");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
@@ -129,7 +137,7 @@ export function VideoUploader({ value, onChange }: VideoUploaderProps) {
     setFileName("");
     setFileSize(0);
     setError("");
-    onChange("", 0);
+    onChange({ upload_id: "", download_url: "", file_size: 0, content_type: "" });
   };
 
   function formatSize(bytes: number): string {

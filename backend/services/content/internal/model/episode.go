@@ -43,7 +43,7 @@ type CreateEpisodeRequest struct {
     EpisodeNo int    `json:"episode_no" binding:"required,min=1"`
     Title     string `json:"title" binding:"required,min=1,max=200"`
     Duration  int    `json:"duration" binding:"required,min=1"`
-    VideoURL  string `json:"video_url" binding:"required,uri"`
+    VideoURL  string `json:"video_url" binding:"required,min=1"`
 }
 
 type UpdateEpisodeRequest struct {

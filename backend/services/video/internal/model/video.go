@@ -56,7 +56,7 @@ type VideoAsset struct {
 
 type UploadCompleteRequest struct {
 	UploadID  string `json:"upload_id" binding:"required"`
-	EpisodeID int64  `json:"episode_id"`
+	EpisodeID int64  `json:"episode_id" binding:"required"`
 	Duration  *int   `json:"duration,omitempty"`
 	FileSize  int64  `json:"file_size,omitempty"`
 }
