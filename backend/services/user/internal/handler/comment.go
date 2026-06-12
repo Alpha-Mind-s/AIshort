@@ -95,7 +95,7 @@ func (h *CommentHandler) Delete(c *gin.Context) {
         return
     }
 
-    c.Status(http.StatusNoContent)
+    response.OK(c, nil)
 }
 
 // Like toggles a like on a comment (like if not liked, unlike if already liked).
