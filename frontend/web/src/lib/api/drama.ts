@@ -233,6 +233,12 @@ export async function deleteEpisode(id: number): Promise<void> {
   await apiFetch(`/episodes/${id}`, { method: "DELETE" });
 }
 
+// ---- view tracking ----
+
+export async function reportView(episodeId: number): Promise<void> {
+  await apiFetch(`/episodes/${episodeId}/view`, { method: "POST" });
+}
+
 // ---- video upload ----
 
 export interface UploadUrlRequest {

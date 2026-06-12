@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { usePlayerStore } from "@/stores/player-store";
 import type { EpisodePlayInfo } from "@/lib/api/drama";
+import { reportView } from "@/lib/api/drama";
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -18,6 +19,10 @@ export function VideoPlayer({ playInfo }: VideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // View tracking: report once per episode load after 3s of continuous playback
+  const viewReportedRef = useRef(false);
+  const viewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentAsset =
     playInfo.qualities.find((q) => q.resolution === currentQuality) ??
@@ -69,8 +74,26 @@ export function VideoPlayer({ playInfo }: VideoPlayerProps) {
     if (video) setDuration(video.duration);
   }, []);
 
-  const handlePlay = useCallback(() => setIsPlaying(true), []);
-  const handlePause = useCallback(() => setIsPlaying(false), []);
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
+    // Report view after 3s of continuous playback (debounce to avoid counting seeks)
+    if (!viewReportedRef.current && !viewTimerRef.current) {
+      viewTimerRef.current = setTimeout(() => {
+        reportView(playInfo.episode.id).catch(() => {});
+        viewReportedRef.current = true;
+        viewTimerRef.current = null;
+      }, 3000);
+    }
+  }, [playInfo.episode.id]);
+
+  const handlePause = useCallback(() => {
+    setIsPlaying(false);
+    // Cancel view timer if paused before the 3s threshold
+    if (viewTimerRef.current) {
+      clearTimeout(viewTimerRef.current);
+      viewTimerRef.current = null;
+    }
+  }, []);
   const handleEnded = useCallback(() => setIsPlaying(false), []);
 
   const handleError = useCallback(() => {
@@ -86,8 +109,13 @@ export function VideoPlayer({ playInfo }: VideoPlayerProps) {
     const video = videoRef.current;
     if (!video || !videoSrc) return;
 
-    // Reset error on new source
+    // Reset error and view tracking on new source
     setError(null);
+    viewReportedRef.current = false;
+    if (viewTimerRef.current) {
+      clearTimeout(viewTimerRef.current);
+      viewTimerRef.current = null;
+    }
     video.src = videoSrc;
     video.load();
   }, [videoSrc]);

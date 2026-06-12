@@ -86,6 +86,7 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 		api.GET("/dramas/:id/episodes", proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/episodes/:id", authMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/episodes/:id/play", authMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
+		api.POST("/episodes/:id/view", authMiddleware, userCtxMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/categories", proxyTo(cfg.Services.ContentSvcAddr))
 
 		// Content — write (auth + forward user context)

@@ -39,6 +39,9 @@ func SetupRouter(pool *pgxpool.Pool) *gin.Engine {
 		api.POST("/dramas/:id/episodes", episodeHandler.Create)
 		api.PUT("/episodes/:id", episodeHandler.Update)
 		api.DELETE("/episodes/:id", episodeHandler.Delete)
+
+		// View tracking
+		api.POST("/episodes/:id/view", episodeHandler.RecordView)
 	}
 
 	// Internal API (auth handled by Gateway via X-Internal-Api-Key)

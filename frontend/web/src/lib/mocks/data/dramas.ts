@@ -95,9 +95,9 @@ export let mockDramas: MockDrama[] = Array.from({ length: 15 }, (_, i) => ({
   tags: TAG_SETS[i % 5],
   release_at: `2026-0${(i % 6) + 1}-${String((i % 28) + 1).padStart(2, "0")}T00:00:00Z`,
   created_at: "2026-01-01T00:00:00Z",
-  view_count: Math.floor(Math.random() * 500000) + 10000,
-  like_count: Math.floor(Math.random() * 50000) + 1000,
-  favorite_count: Math.floor(Math.random() * 20000) + 500,
+  view_count: 0,
+  like_count: 0,
+  favorite_count: 0,
 }));
 
 export let mockEpisodes: MockEpisode[] = mockDramas.flatMap((drama) =>

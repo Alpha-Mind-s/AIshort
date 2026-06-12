@@ -1,93 +1,97 @@
 package repository
 
 import (
-    "context"
-    "fmt"
-    "strings"
+	"context"
+	"fmt"
+	"strings"
 
-    "github.com/jackc/pgx/v5/pgxpool"
-    "github.com/ai-shot/content-svc/internal/model"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/ai-shot/content-svc/internal/model"
 )
 
 type DramaRepository struct {
-    pool *pgxpool.Pool
+	pool *pgxpool.Pool
 }
 
 func NewDramaRepository(pool *pgxpool.Pool) *DramaRepository {
-    return &DramaRepository{pool: pool}
+	return &DramaRepository{pool: pool}
 }
 
 func validDramaSortOrder(sort string) string {
-    switch sort {
-    case "popular":
-        return "d.id DESC"
-    case "trending":
-        return "d.release_at DESC NULLS LAST"
-    default:
-        return "d.release_at DESC NULLS LAST"
-    }
+	switch sort {
+	case "popular":
+		return "d.view_count DESC, d.id DESC"
+	case "trending":
+		return "d.release_at DESC NULLS LAST"
+	default:
+		return "d.release_at DESC NULLS LAST"
+	}
 }
 
 func (r *DramaRepository) FindAll(ctx context.Context, categoryID *int, sort, keyword string, page, pageSize int) ([]*model.Drama, int, error) {
-    where := "WHERE d.status='published'"
-    args := []interface{}{}
-    argIdx := 1
+	where := "WHERE d.status='published'"
+	args := []interface{}{}
+	argIdx := 1
 
-    if categoryID != nil {
-        where += fmt.Sprintf(" AND d.category_id=$%d", argIdx)
-        args = append(args, *categoryID)
-        argIdx++
-    }
-    if keyword != "" {
-        where += fmt.Sprintf(" AND (d.title ILIKE $%d OR d.description ILIKE $%d)", argIdx, argIdx+1)
-        like := "%" + keyword + "%"
-        args = append(args, like, like)
-        argIdx += 2
-    }
+	if categoryID != nil {
+		where += fmt.Sprintf(" AND d.category_id=$%d", argIdx)
+		args = append(args, *categoryID)
+		argIdx++
+	}
+	if keyword != "" {
+		where += fmt.Sprintf(" AND (d.title ILIKE $%d OR d.description ILIKE $%d)", argIdx, argIdx+1)
+		like := "%" + keyword + "%"
+		args = append(args, like, like)
+		argIdx += 2
+	}
 
-    var total int
-    countQuery := "SELECT COUNT(*) FROM dramas d " + where
-    r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
+	var total int
+	countQuery := "SELECT COUNT(*) FROM dramas d " + where
+	r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
 
-    orderBy := validDramaSortOrder(sort)
+	orderBy := validDramaSortOrder(sort)
 
-    offset := (page - 1) * pageSize
-    query := fmt.Sprintf(`
-        SELECT d.id, d.title, d.description, d.cover_url, d.category_id, d.creator_id,
-               d.total_episodes, d.status, d.tags, d.release_at, d.created_at, d.updated_at
-        FROM dramas d %s ORDER BY %s LIMIT $%d OFFSET $%d`, where, orderBy, argIdx, argIdx+1)
-    args = append(args, pageSize, offset)
+	offset := (page - 1) * pageSize
+	query := fmt.Sprintf(`
+		SELECT d.id, d.title, d.description, d.cover_url, d.category_id, d.creator_id,
+		       d.total_episodes, d.status, d.tags, d.release_at, d.created_at, d.updated_at,
+		       COALESCE(d.view_count, 0)
+		FROM dramas d %s ORDER BY %s LIMIT $%d OFFSET $%d`, where, orderBy, argIdx, argIdx+1)
+	args = append(args, pageSize, offset)
 
-    rows, err := r.pool.Query(ctx, query, args...)
-    if err != nil {
-        return nil, 0, err
-    }
-    defer rows.Close()
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
 
-    var dramas []*model.Drama
-    for rows.Next() {
-        d := &model.Drama{}
-        if err := rows.Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID,
-            &d.CreatorID, &d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt); err != nil {
-            return nil, 0, err
-        }
-        dramas = append(dramas, d)
-    }
-    return dramas, total, nil
+	var dramas []*model.Drama
+	for rows.Next() {
+		d := &model.Drama{}
+		if err := rows.Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID,
+			&d.CreatorID, &d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt,
+			&d.ViewCount); err != nil {
+			return nil, 0, err
+		}
+		dramas = append(dramas, d)
+	}
+	return dramas, total, nil
 }
 
 func (r *DramaRepository) FindByID(ctx context.Context, id int64) (*model.Drama, error) {
-    d := &model.Drama{}
-    err := r.pool.QueryRow(ctx, `
-        SELECT id, title, description, cover_url, category_id, creator_id,
-               total_episodes, status, tags, release_at, created_at, updated_at
-        FROM dramas WHERE id=$1`, id).Scan(
-        &d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID,
-        &d.CreatorID, &d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
-    if err != nil {
-        return nil, err
-    }
-    return d, nil
+	d := &model.Drama{}
+	err := r.pool.QueryRow(ctx, `
+		SELECT id, title, description, cover_url, category_id, creator_id,
+		       total_episodes, status, tags, release_at, created_at, updated_at,
+		       COALESCE(view_count, 0)
+		FROM dramas WHERE id=$1`, id).Scan(
+		&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID,
+		&d.CreatorID, &d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.ViewCount)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
 }
 
 func (r *DramaRepository) Create(ctx context.Context, req *model.CreateDramaRequest, creatorID int64) (*model.Drama, error) {
@@ -100,10 +104,12 @@ func (r *DramaRepository) Create(ctx context.Context, req *model.CreateDramaRequ
 		INSERT INTO dramas (title, description, cover_url, category_id, creator_id, tags, status)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, title, description, cover_url, category_id, creator_id,
-		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		          total_episodes, status, tags, release_at, created_at, updated_at,
+		          COALESCE(view_count, 0)`,
 		req.Title, req.Description, req.CoverURL, req.CategoryID, creatorID, req.Tags, status).
 		Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
-			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt,
+			&d.ViewCount)
 	if err != nil {
 		return nil, err
 	}
@@ -155,13 +161,15 @@ func (r *DramaRepository) Update(ctx context.Context, id int64, req *model.Updat
 		UPDATE dramas SET %s, updated_at=NOW()
 		WHERE id=$%d
 		RETURNING id, title, description, cover_url, category_id, creator_id,
-		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		          total_episodes, status, tags, release_at, created_at, updated_at,
+		          COALESCE(view_count, 0)`,
 		strings.Join(sets, ", "), argIdx)
 
 	d := &model.Drama{}
 	err := r.pool.QueryRow(ctx, query, args...).Scan(
 		&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
-		&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+		&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.ViewCount)
 	if err != nil {
 		return nil, err
 	}
@@ -179,10 +187,12 @@ func (r *DramaRepository) UpdateStatus(ctx context.Context, id int64, status str
 		UPDATE dramas SET status=$1, updated_at=NOW()
 		WHERE id=$2
 		RETURNING id, title, description, cover_url, category_id, creator_id,
-		          total_episodes, status, tags, release_at, created_at, updated_at`,
+		          total_episodes, status, tags, release_at, created_at, updated_at,
+		          COALESCE(view_count, 0)`,
 		status, id).
 		Scan(&d.ID, &d.Title, &d.Description, &d.CoverURL, &d.CategoryID, &d.CreatorID,
-			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt)
+			&d.TotalEpisodes, &d.Status, &d.Tags, &d.ReleaseAt, &d.CreatedAt, &d.UpdatedAt,
+			&d.ViewCount)
 	if err != nil {
 		return nil, err
 	}

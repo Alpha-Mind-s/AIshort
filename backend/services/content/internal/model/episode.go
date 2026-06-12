@@ -3,15 +3,16 @@ package model
 import "time"
 
 type Episode struct {
-    ID            int64          `json:"id"`
-    DramaID       int64          `json:"drama_id"`
-    EpisodeNo     int            `json:"episode_no"`
-    Title         string         `json:"title"`
-    Duration      *int           `json:"duration"`
-    VideoURL      string         `json:"video_url"`
-    Status        string         `json:"status"`
-    CreatedAt     time.Time      `json:"created_at"`
-    UpdatedAt     time.Time      `json:"updated_at"`
+    ID            int64           `json:"id"`
+    DramaID       int64           `json:"drama_id"`
+    EpisodeNo     int             `json:"episode_no"`
+    Title         string          `json:"title"`
+    Duration      *int            `json:"duration"`
+    VideoURL      string          `json:"video_url"`
+    Status        string          `json:"status"`
+    ViewCount     int64           `json:"view_count"`
+    CreatedAt     time.Time       `json:"created_at"`
+    UpdatedAt     time.Time       `json:"updated_at"`
     Localizations []*Localization `json:"localizations,omitempty"`
 }
 
