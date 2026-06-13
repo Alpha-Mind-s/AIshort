@@ -114,9 +114,17 @@ export default async function DramaDetailPage({ params }: Props) {
             <div className="flex items-center justify-between pt-2">
               {drama.creator && (
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
-                    {drama.creator.nickname.charAt(0)}
-                  </div>
+                  {drama.creator.avatar_url ? (
+                    <img
+                      src={drama.creator.avatar_url}
+                      alt={drama.creator.nickname}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                      {drama.creator.nickname.charAt(0)}
+                    </div>
+                  )}
                   <span className="text-sm font-medium">{drama.creator.nickname}</span>
                   <span className="text-xs text-muted-foreground">· Creator</span>
                 </div>

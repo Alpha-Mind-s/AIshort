@@ -41,9 +41,17 @@ export function CommentItem({
     <div className="space-y-2">
       <div className="flex gap-3">
         {/* Avatar */}
-        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
-          {comment.user?.nickname?.charAt(0) ?? '?'}
-        </div>
+        {comment.user?.avatar_url ? (
+          <img
+            src={comment.user.avatar_url}
+            alt={comment.user?.nickname ?? ''}
+            className="flex-shrink-0 h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
+            {comment.user?.nickname?.charAt(0) ?? '?'}
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">

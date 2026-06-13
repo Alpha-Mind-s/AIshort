@@ -60,9 +60,17 @@ export default function AdminUsersPage() {
                 <tr key={user.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
-                        {user.nickname.charAt(0)}
-                      </div>
+                      {user.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt={user.nickname}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
+                          {user.nickname.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <p className="font-medium">{user.nickname}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>

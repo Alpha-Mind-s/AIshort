@@ -32,9 +32,17 @@ export default function AdminUserDetailPage() {
       </Link>
 
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold">
-          {user.nickname.charAt(0)}
-        </div>
+        {user.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt={user.nickname}
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold">
+            {user.nickname.charAt(0)}
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-bold">{user.nickname}</h1>
           <p className="text-sm text-muted-foreground">{user.email}</p>
