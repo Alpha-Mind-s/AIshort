@@ -77,7 +77,7 @@ export default function AdminLayout({
             href="/"
             className="flex items-center gap-2 font-bold text-primary text-sm"
           >
-            <span>🎬</span> AIshort Admin
+            <img src="/logo.png" alt="AIshort" className="h-5 w-auto" /> AIshort Admin
           </Link>
           <button
             onClick={() => setMobileOpen(false)}

@@ -8,7 +8,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
       <Link href="/" className="flex items-center gap-2 font-bold text-2xl text-primary mb-8 hover:opacity-80 transition-opacity">
-        <span>🎬</span>
+        <img src="/logo.png" alt="AIshort" className="h-10 w-auto" />
         <span>AIshort</span>
       </Link>
       <div className="w-full max-w-sm">

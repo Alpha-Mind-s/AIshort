@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   },
   description:
     "Discover AI-localized short dramas from around the world. Watch in your language with AI dubbing and subtitles.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
