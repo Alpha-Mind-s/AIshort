@@ -117,7 +117,14 @@
   "profile": {
     "title": "My Profile",
     "settings": "Account Settings",
-    "subscription": "My Subscription",
+    "my_subscription": "My Subscription",
+    "subscription": {
+      "status_active": "Active",
+      "status_cancelled": "Cancelled",
+      "status_expired": "Expired",
+      "cancel": "Cancel Subscription",
+      "no_active": "No active subscription"
+    },
     "language": "Language",
     "region": "Region",
     "save": "Save Changes",

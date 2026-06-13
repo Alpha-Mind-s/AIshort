@@ -63,7 +63,7 @@ export default function ProfilePage() {
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-yellow-500" />
-          <h2 className="text-lg font-semibold">{t("subscription")}</h2>
+          <h2 className="text-lg font-semibold">{t("my_subscription")}</h2>
         </div>
 
         {subLoading ? (
