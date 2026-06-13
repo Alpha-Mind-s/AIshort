@@ -19,8 +19,11 @@ type PayPalConfig struct {
 }
 
 type StripeConfig struct {
-	APIKey        string
-	WebhookSecret string
+	APIKey         string
+	WebhookSecret  string
+	PriceMonthly   string
+	PriceQuarterly string
+	PriceYearly    string
 }
 
 func Load() *Config {
@@ -31,6 +34,9 @@ func Load() *Config {
 	cfg.PayPal.ClientSecret = os.Getenv("PAYPAL_CLIENT_SECRET")
 	cfg.Stripe.APIKey = getEnv("STRIPE_API_KEY", "")
 	cfg.Stripe.WebhookSecret = getEnv("STRIPE_WEBHOOK_SECRET", "")
+	cfg.Stripe.PriceMonthly = getEnv("STRIPE_PRICE_MONTHLY", "")
+	cfg.Stripe.PriceQuarterly = getEnv("STRIPE_PRICE_QUARTERLY", "")
+	cfg.Stripe.PriceYearly = getEnv("STRIPE_PRICE_YEARLY", "")
 	return cfg
 }
 

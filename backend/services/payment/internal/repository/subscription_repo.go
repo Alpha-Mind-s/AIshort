@@ -50,3 +50,15 @@ func (r *SubscriptionRepository) CreatePayment(ctx context.Context, userID int64
 		userID, subscriptionID, amount, currency, channel, channelTxnID)
 	return err
 }
+
+// ExpireStale marks subscriptions that are past their end_at as expired.
+// Returns the number of rows updated.
+func (r *SubscriptionRepository) ExpireStale(ctx context.Context) (int64, error) {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE subscriptions SET status='expired', updated_at=NOW()
+		 WHERE status='active' AND end_at < NOW()`)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}

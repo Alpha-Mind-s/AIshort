@@ -54,8 +54,9 @@ var (
 
 // 订阅支付错误 (40xxx)
 var (
-	ErrSubscriptionExists = &AppError{Code: 40001, Message: "active subscription exists", HTTPStatus: http.StatusConflict}
-	ErrPaymentFailed      = &AppError{Code: 40002, Message: "payment failed", HTTPStatus: http.StatusPaymentRequired}
+	ErrSubscriptionExists   = &AppError{Code: 40001, Message: "active subscription exists", HTTPStatus: http.StatusConflict}
+	ErrPaymentFailed        = &AppError{Code: 40002, Message: "payment failed", HTTPStatus: http.StatusPaymentRequired}
+	ErrSubscriptionRequired = &AppError{Code: 40003, Message: "subscription required to access this content", HTTPStatus: http.StatusPaymentRequired}
 )
 
 // 视频错误 (50xxx)

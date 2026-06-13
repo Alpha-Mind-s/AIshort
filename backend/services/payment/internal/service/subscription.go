@@ -21,22 +21,14 @@ var Plans = []model.SubscriptionPlan{
 	{ID: 3, Name: "yearly", Price: 79.99, Currency: "USD", Description: "Yearly subscription", Features: []string{"Unlimited viewing", "4K max quality", "Early access"}},
 }
 
-// planToPriceID maps plan types to Stripe recurring price IDs.
-// In production, create these in the Stripe Dashboard and set via env vars.
-// For dev/test, these are placeholders that must be replaced with real IDs.
-var planToPriceID = map[string]string{
-	"monthly":   "price_monthly",
-	"quarterly": "price_quarterly",
-	"yearly":    "price_yearly",
-}
-
 type SubscriptionService struct {
-	repo   *repository.SubscriptionRepository
-	secret string // Stripe webhook secret
+	repo      *repository.SubscriptionRepository
+	secret    string            // Stripe webhook secret
+	priceIDs  map[string]string // plan type -> Stripe Price ID
 }
 
-func NewSubscriptionService(repo *repository.SubscriptionRepository, stripeSecret string) *SubscriptionService {
-	return &SubscriptionService{repo: repo, secret: stripeSecret}
+func NewSubscriptionService(repo *repository.SubscriptionRepository, stripeSecret string, priceIDs map[string]string) *SubscriptionService {
+	return &SubscriptionService{repo: repo, secret: stripeSecret, priceIDs: priceIDs}
 }
 
 func (s *SubscriptionService) GetPlans() []model.SubscriptionPlan {
@@ -56,7 +48,7 @@ func (s *SubscriptionService) Create(ctx context.Context, userID int64, req *mod
 		return nil, fmt.Errorf("payment channel not yet implemented: %s (use 'stripe')", req.Channel)
 	}
 
-	priceID := planToPriceID[req.PlanType]
+	priceID := s.priceIDs[req.PlanType]
 	if priceID == "" {
 		return nil, fmt.Errorf("unknown plan type: %s", req.PlanType)
 	}
@@ -216,4 +208,10 @@ func planPrice(planType string) int64 {
 		return 7999
 	}
 	return 0
+}
+
+// ExpireStaleSubscriptions marks expired subscriptions and returns how many were affected.
+// This is a safety net — Stripe webhooks handle the normal case.
+func (s *SubscriptionService) ExpireStaleSubscriptions(ctx context.Context) (int64, error) {
+	return s.repo.ExpireStale(ctx)
 }

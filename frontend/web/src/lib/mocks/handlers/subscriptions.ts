@@ -15,9 +15,8 @@ export const subscriptionsHandlers = [
       message: "success",
       data: {
         subscription_id: 2,
-        payment_url: body.channel === "paypal"
-          ? "https://www.paypal.com/checkout/mock"
-          : "https://checkout.stripe.com/pay/mock",
+        // Only Stripe is supported — PayPal not yet implemented
+        payment_url: "https://checkout.stripe.com/c/pay/cs_test_mock",
         return_url: body.return_url ?? "/subscribe/success",
       },
     });

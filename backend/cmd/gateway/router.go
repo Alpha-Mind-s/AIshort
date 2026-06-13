@@ -40,7 +40,7 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 
 	// File proxy — serve MinIO files through gateway (bucket stays private)
 	// Support both GET (streaming) and HEAD (metadata checks by browsers/video players)
-	r.Match([]string{"GET", "HEAD"}, "/files/*filepath", proxyToMinIO(minioClient))
+	r.Match([]string{"GET", "HEAD"}, "/files/*filepath", authMiddleware, proxyToMinIO(minioClient))
 
 	api := r.Group("/api/v1")
 	api.Use(generalLimiter.Limit(60))
@@ -85,7 +85,12 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 		api.GET("/dramas/:id", proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/dramas/:id/episodes", proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/episodes/:id", authMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
-		api.GET("/episodes/:id/play", authMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
+		api.GET("/episodes/:id/play",
+			authMiddleware,
+			userCtxMiddleware,
+			middleware.RequireSubscription(cfg.Services.PaymentSvcAddr),
+			proxyTo(cfg.Services.ContentSvcAddr),
+		)
 		api.POST("/episodes/:id/view", authMiddleware, userCtxMiddleware, proxyTo(cfg.Services.ContentSvcAddr))
 		api.GET("/categories", proxyTo(cfg.Services.ContentSvcAddr))
 
@@ -114,7 +119,7 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 		}
 
 		sub := api.Group("/subscriptions")
-		sub.Use(authMiddleware)
+		sub.Use(authMiddleware, userCtxMiddleware)
 		{
 			sub.POST("/create", proxyTo(cfg.Services.PaymentSvcAddr))
 			sub.POST("/cancel", proxyTo(cfg.Services.PaymentSvcAddr))

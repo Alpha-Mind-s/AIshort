@@ -6,11 +6,12 @@ import (
 	"github.com/stripe/stripe-go/v84"
 
 	"github.com/ai-shot/payment-svc/internal/handler"
+	"github.com/ai-shot/payment-svc/internal/middleware"
 	"github.com/ai-shot/payment-svc/internal/repository"
 	svc "github.com/ai-shot/payment-svc/internal/service"
 )
 
-func SetupRouter(pool *pgxpool.Pool, stripeKey, stripeSecret string) *gin.Engine {
+func SetupRouter(pool *pgxpool.Pool, stripeKey, stripeSecret string, stripePriceIDs map[string]string) *gin.Engine {
 	// Initialize Stripe with the API key
 	if stripeKey != "" {
 		stripe.Key = stripeKey
@@ -19,11 +20,12 @@ func SetupRouter(pool *pgxpool.Pool, stripeKey, stripeSecret string) *gin.Engine
 	r := gin.Default()
 
 	subRepo := repository.NewSubscriptionRepository(pool)
-	subSvc := svc.NewSubscriptionService(subRepo, stripeSecret)
+	subSvc := svc.NewSubscriptionService(subRepo, stripeSecret, stripePriceIDs)
 	subHandler := handler.NewSubscriptionHandler(subSvc)
 	webhookHandler := handler.NewWebhookHandler(subSvc, stripeSecret)
 
 	api := r.Group("/api/v1")
+	api.Use(middleware.ParseUserContext())
 	{
 		api.GET("/subscriptions/plans", subHandler.GetPlans)
 		api.POST("/subscriptions/create", subHandler.Create)

@@ -16,7 +16,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const intlRouter = useIntlRouter();
   const planName = searchParams.get("plan") ?? "monthly";
-  const [channel, setChannel] = useState<"paypal" | "stripe">("paypal");
+  const [channel, setChannel] = useState<"stripe">("stripe");
 
   const { data: plans } = useQuery({
     queryKey: ["plans"],
@@ -85,24 +85,7 @@ export default function CheckoutPage() {
       {/* Payment method */}
       <h3 className="text-lg font-semibold mb-3">{t("payment_method")}</h3>
       <div className="space-y-3 mb-6">
-        <label
-          className={`flex items-center gap-3 rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-            channel === "paypal"
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50"
-          }`}
-        >
-          <input
-            type="radio"
-            name="channel"
-            value="paypal"
-            checked={channel === "paypal"}
-            onChange={() => setChannel("paypal")}
-            className="h-4 w-4 accent-primary"
-          />
-          <span className="font-medium">{t("paypal")}</span>
-        </label>
-
+        {/* PayPal not yet implemented — see backend services/payment */}
         <label
           className={`flex items-center gap-3 rounded-lg border-2 p-4 cursor-pointer transition-colors ${
             channel === "stripe"
