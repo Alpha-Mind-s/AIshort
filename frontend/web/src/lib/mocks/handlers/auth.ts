@@ -119,4 +119,41 @@ export const authHandlers = [
   http.post("*/api/v1/auth/logout", () => {
     return HttpResponse.json({ code: 0, message: "success", data: null });
   }),
+
+  // GET /users/me
+  http.get("*/api/v1/users/me", ({ request }) => {
+    if (!request.headers.get("Authorization")) {
+      return HttpResponse.json(
+        { code: 401, message: "Unauthorized", data: null },
+        { status: 401 }
+      );
+    }
+    return HttpResponse.json({
+      code: 0,
+      message: "success",
+      data: mockUsers[0],
+    });
+  }),
+
+  // PUT /users/me
+  http.put("*/api/v1/users/me", async ({ request }) => {
+    const body = (await request.json()) as {
+      nickname?: string;
+      avatar_url?: string;
+      language?: string;
+      region?: string;
+    };
+    // Mutate mockUsers[0] in place so subsequent GET /users/me returns the update
+    Object.assign(mockUsers[0],
+      Object.fromEntries(
+        Object.entries(body).filter(([, v]) => v !== undefined && v !== "")
+      ),
+      { updated_at: new Date().toISOString() }
+    );
+    return HttpResponse.json({
+      code: 0,
+      message: "success",
+      data: mockUsers[0],
+    });
+  }),
 ];

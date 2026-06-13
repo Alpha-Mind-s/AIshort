@@ -13,6 +13,8 @@ type GatewayConfig struct {
     JWT            config.JWTConfig
     Services       ServiceConfig
     MinIO          MinIOConfig
+    FileCDNURL     string // base URL for constructing file download URLs
+    UploadBucket   string // MinIO bucket for generic file uploads
     InternalApiKey string
 }
 
@@ -45,6 +47,8 @@ func LoadConfig() *GatewayConfig {
         AccessKey: getEnv("S3_ACCESS_KEY", "minioadmin"),
         SecretKey: getEnv("S3_SECRET_KEY", "minioadmin"),
     }
+    cfg.FileCDNURL = getEnv("FILE_CDN_URL", "http://localhost:8080/files")
+    cfg.UploadBucket = getEnv("FILE_BUCKET", "aishot-videos")
     cfg.InternalApiKey = getEnv("INTERNAL_API_KEY", "dev-internal-key")
     return cfg
 }

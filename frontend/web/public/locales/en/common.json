@@ -128,7 +128,13 @@
     "language": "Language",
     "region": "Region",
     "save": "Save Changes",
-    "member_since": "Member since"
+    "member_since": "Member since",
+    "edit_profile": "Edit Profile",
+    "cancel_edit": "Cancel",
+    "saving": "Saving...",
+    "change_photo": "Change Photo",
+    "nickname_label": "Nickname",
+    "profile_updated": "Profile updated"
   },
   "admin": {
     "dashboard": "Dashboard",

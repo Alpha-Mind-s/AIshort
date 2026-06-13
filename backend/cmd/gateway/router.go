@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 
@@ -38,9 +39,10 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 
 	userCtxMiddleware := middleware.ForwardUserContext()
 
-	// File proxy — serve MinIO files through gateway (bucket stays private)
-	// Support both GET (streaming) and HEAD (metadata checks by browsers/video players)
-	r.Match([]string{"GET", "HEAD"}, "/files/*filepath", authMiddleware, proxyToMinIO(minioClient))
+	// File proxy — serve MinIO files through gateway.
+	// No auth required: images (avatars, covers) are public content.
+	// Video protection is handled at /episodes/:id/play via RequireSubscription.
+	r.Match([]string{"GET", "HEAD"}, "/files/*filepath", proxyToMinIO(minioClient))
 
 	api := r.Group("/api/v1")
 	api.Use(generalLimiter.Limit(60))
@@ -117,6 +119,9 @@ func SetupRouter(rdb *redis.Client, minioClient *minio.Client, cfg *GatewayConfi
 			video.POST("/upload/complete", proxyTo(cfg.Services.VideoSvcAddr))
 			video.GET("/:id/tasks", proxyTo(cfg.Services.VideoSvcAddr))
 		}
+
+		// Generic file upload — presigned URL for avatars, covers, etc.
+		api.POST("/files/upload-url", authMiddleware, presignFileUpload(minioClient, cfg.UploadBucket, cfg.FileCDNURL))
 
 		sub := api.Group("/subscriptions")
 		sub.Use(authMiddleware, userCtxMiddleware)
@@ -235,5 +240,60 @@ func proxyToMinIO(minioClient *minio.Client) gin.HandlerFunc {
 		if c.Request.Method != http.MethodHead {
 			io.Copy(c.Writer, obj)
 		}
+	}
+}
+
+// presignFileUpload returns a handler that generates presigned PUT URLs for
+// direct-to-MinIO uploads. Used for avatars, cover images, and other non-video
+// file uploads that don't need the video service's session tracking.
+func presignFileUpload(minioClient *minio.Client, bucket, cdnURL string) gin.HandlerFunc {
+	type uploadURLRequest struct {
+		Filename    string `json:"filename" binding:"required"`
+		ContentType string `json:"content_type" binding:"required"`
+	}
+
+	type uploadURLResponse struct {
+		UploadURL   string `json:"upload_url"`
+		DownloadURL string `json:"download_url"`
+		ExpiresIn   int64  `json:"expires_in"`
+	}
+
+	return func(c *gin.Context) {
+		var req uploadURLRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    400,
+				"message": "invalid request: filename and content_type are required",
+				"data":    nil,
+			})
+			return
+		}
+
+		// Generate a unique object key: uploads/avatars/{uuid}/{filename}
+		objectKey := fmt.Sprintf("uploads/avatars/%s/%s", uuid.New().String(), req.Filename)
+
+		expiry := 1 * time.Hour
+		presignedURL, err := minioClient.PresignedPutObject(c.Request.Context(), bucket, objectKey, expiry)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    500,
+				"message": "failed to generate upload URL",
+				"data":    nil,
+			})
+			return
+		}
+
+		downloadURL := fmt.Sprintf("%s/%s/%s", cdnURL, bucket, objectKey)
+
+		resp := gin.H{
+			"code":    0,
+			"message": "success",
+			"data": uploadURLResponse{
+				UploadURL:   presignedURL.String(),
+				DownloadURL: downloadURL,
+				ExpiresIn:   int64(expiry.Seconds()),
+			},
+		}
+		c.JSON(http.StatusOK, resp)
 	}
 }

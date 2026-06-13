@@ -712,6 +712,55 @@ components:
           type: object
           nullable: true
 
+    # ========== 用户资料编辑 ==========
+    UpdateProfileRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 100
+        avatar_url:
+          type: string
+          format: uri
+        language:
+          type: string
+          description: 语言代码 (en/es/pt/ja/ko)
+        region:
+          type: string
+          description: 地区代码 (US/ES/BR/JP/KR/GB/FR/DE/MX)
+
+    # ========== 通用文件上传 ==========
+    FileUploadUrlRequest:
+      type: object
+      required:
+        - filename
+        - content_type
+      properties:
+        filename:
+          type: string
+          description: 原始文件名
+        content_type:
+          type: string
+          description: MIME 类型 (image/jpeg, image/png, image/webp)
+          example: image/jpeg
+
+    FileUploadUrlResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: S3/MinIO 预签名上传 URL
+        download_url:
+          type: string
+          format: uri
+          description: 上传完成后的文件访问 URL
+        expires_in:
+          type: integer
+          description: 上传 URL 有效期（秒）
+          example: 3600
+
 paths:
   # ========== 用户认证 ==========
   /auth/register:
@@ -845,6 +894,49 @@ paths:
       responses:
         "200":
           description: 登出成功
+
+  # ========== 用户资料 ==========
+  /users/me:
+    get:
+      tags: [用户]
+      summary: 获取当前用户资料
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: 用户资料
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+    put:
+      tags: [用户]
+      summary: 更新当前用户资料
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        "200":
+          description: 更新后的用户资料
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
 
   # ========== 短剧内容 ==========
   /dramas:
@@ -1263,6 +1355,35 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/UploadCompleteResponse'
+        "400":
+          description: 参数错误
+
+  # ========== 通用文件上传 ==========
+  /files/upload-url:
+    post:
+      tags: [文件上传]
+      summary: 获取通用文件上传 URL
+      description: 返回 S3/MinIO 预签名 PUT URL，用于上传头像、封面等非视频文件。上传完成后使用 download_url 访问文件。
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUploadUrlRequest'
+      responses:
+        "200":
+          description: 预签名上传 URL
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FileUploadUrlResponse'
         "400":
           description: 参数错误
 
