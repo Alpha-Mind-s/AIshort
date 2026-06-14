@@ -34,8 +34,8 @@ export default function ProfilePage() {
 
   const cancelMutation = useMutation({
     mutationFn: cancelSubscription,
-    onSuccess: () => toast.success("Subscription cancelled"),
-    onError: () => toast.error("Failed to cancel"),
+    onSuccess: () => toast.success(t("toast.subscription_cancelled")),
+    onError: () => toast.error(t("toast.cancel_failed")),
   });
 
   // ---- edit mode state ----
@@ -59,7 +59,7 @@ export default function ProfilePage() {
       }
     },
     onError: () => {
-      toast.error("Failed to update profile");
+      toast.error(t("toast.update_failed"));
     },
   });
 
@@ -96,9 +96,9 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-muted-foreground">Please log in to view your profile.</p>
+        <p className="text-muted-foreground">{t("not_logged_in")}</p>
         <Link href="/login" className="text-primary text-sm">
-          Log in
+          {t("login")}
         </Link>
       </div>
     );
@@ -217,14 +217,14 @@ export default function ProfilePage() {
       {/* Edit mode: email + role (read-only) */}
       {isEditing && (
         <section className="rounded-xl border border-border bg-card p-6 space-y-3">
-          <h2 className="text-lg font-semibold">Account</h2>
+          <h2 className="text-lg font-semibold">{t("account")}</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">Email</span>
+              <span className="text-muted-foreground">{t("email_label")}</span>
               <p className="font-medium">{user.email}</p>
             </div>
             <div>
-              <span className="text-muted-foreground">Role</span>
+              <span className="text-muted-foreground">{t("role_label")}</span>
               <p className="font-medium capitalize">{user.role}</p>
             </div>
           </div>
@@ -274,13 +274,13 @@ export default function ProfilePage() {
         ) : (
           <div className="text-center py-4">
             <p className="text-sm text-muted-foreground mb-3">
-              No active subscription
+              {t("no_subscription")}
             </p>
             <Link
               href="/subscribe"
               className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Subscribe Now
+              {t("subscribe_now")}
             </Link>
           </div>
         )}
@@ -321,7 +321,7 @@ export default function ProfilePage() {
             className="flex items-center gap-3 w-full rounded-lg border border-border p-4 hover:bg-muted transition-colors text-left"
           >
             <LogOut className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium">Log out</span>
+            <span className="text-sm font-medium">{t("log_out")}</span>
           </button>
         </div>
       )}

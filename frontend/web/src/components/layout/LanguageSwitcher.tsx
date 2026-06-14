@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/lib/i18n/navigation";
 import { LOCALES } from "@/lib/utils/constants";
 
@@ -12,6 +13,7 @@ const FLAGS: Record<string, string> = {
 };
 
 export function LanguageSwitcher() {
+  const t = useTranslations("common");
   const pathname = usePathname();
   const router = useRouter();
 
@@ -26,7 +28,7 @@ export function LanguageSwitcher() {
       defaultValue=""
     >
       <option value="" disabled>
-        Language
+        {t("language")}
       </option>
       {LOCALES.map((loc) => (
         <option key={loc} value={loc}>

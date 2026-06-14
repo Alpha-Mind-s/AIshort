@@ -12,6 +12,13 @@ interface CommentSectionProps {
 
 export function CommentSection({ dramaId }: CommentSectionProps) {
   const t = useTranslations("comment");
+  const toastMsg = {
+    posted: t("toast.posted"),
+    postFailed: t("toast.post_failed"),
+    deleted: t("toast.deleted"),
+    deleteFailed: t("toast.delete_failed"),
+  };
+
   const {
     comments,
     isLoading,
@@ -23,7 +30,7 @@ export function CommentSection({ dramaId }: CommentSectionProps) {
     likeComment,
     hasMore,
     loadMore,
-  } = useComments(dramaId);
+  } = useComments(dramaId, toastMsg);
 
   return (
     <div className="space-y-6">
@@ -64,7 +71,7 @@ export function CommentSection({ dramaId }: CommentSectionProps) {
         </div>
       ) : comments.length === 0 ? (
         <p className="text-center py-8 text-sm text-muted-foreground">
-          No comments yet. Be the first to share your thoughts!
+          {t("no_comments_yet")}
         </p>
       ) : (
         <div className="space-y-3">

@@ -30,19 +30,19 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 
 import type { Resolver } from "react-hook-form";
 
-export function zodResolver<T extends z.Schema>(
+export function zodResolver<T extends z.ZodType>(
   schema: T
 ): Resolver<z.infer<T>> {
   return async (values) => {
     const result = schema.safeParse(values);
     if (result.success) {
-      return { values: result.data, errors: {} };
+      return { values: result.data, errors: {} } as any;
     }
     const fieldErrors: Record<string, { type: string; message: string }> = {};
     for (const issue of result.error.issues) {
       const path = issue.path.join(".");
       fieldErrors[path] = { type: issue.code, message: issue.message };
     }
-    return { values: {}, errors: fieldErrors };
+    return { values: {} as any, errors: fieldErrors } as any;
   };
 }

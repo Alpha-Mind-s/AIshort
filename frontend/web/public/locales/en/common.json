@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "AIshort",
-    "tagline": "AI-powered short drama platform"
+    "tagline": "AI-powered short drama platform",
+    "meta_title": "AIshort — AI-powered short drama platform",
+    "meta_description": "Discover AI-localized short dramas from around the world. Watch in your language with AI dubbing and subtitles."
   },
   "nav": {
     "home": "Home",
@@ -43,7 +45,15 @@
     "error_email": "Invalid email address",
     "error_password": "Password must be at least 8 characters",
     "error_invalid_credentials": "Invalid email or password",
-    "error_email_exists": "This email is already registered"
+    "error_email_exists": "This email is already registered",
+    "toast": {
+      "welcome_back": "Welcome back!",
+      "invalid_credentials": "Invalid email or password",
+      "account_created": "Account created successfully!",
+      "registration_failed": "Registration failed",
+      "oauth_unavailable": "OAuth login is not available yet",
+      "logged_out": "Logged out"
+    }
   },
   "drama": {
     "episodes": "Episodes",
@@ -61,7 +71,16 @@
     "draft": "Draft",
     "published": "Published",
     "reviewing": "Under Review",
-    "archived": "Archived"
+    "archived": "Archived",
+    "watch": "Watch",
+    "processing": "Processing...",
+    "failed": "Failed",
+    "no_dramas": "No dramas found",
+    "all": "All",
+    "ep_abbr": "{count, plural, one {# ep} other {# eps}}",
+    "views_count": "{count, plural, one {# view} other {# views}}",
+    "episodes_count": "{count, plural, one {# episode} other {# episodes}}",
+    "languages_count": "{count, plural, one {# language} other {# languages}}"
   },
   "player": {
     "quality": "Quality",
@@ -70,14 +89,28 @@
     "auto": "Auto",
     "next_episode": "Next Episode",
     "prev_episode": "Previous Episode",
-    "episode_list": "Episode List"
+    "episode_list": "Episode List",
+    "failed_to_load": "Failed to load video",
+    "subscribe_to_watch": "Subscribe to Watch",
+    "first_episode_free": "Episode 1 is free — subscribe to unlock the full series.",
+    "view_plans": "View Plans",
+    "now_playing": "▶ Now",
+    "video_error": "Video failed to load"
   },
   "favorites": {
     "title": "My Favorites",
     "empty": "No favorites yet. Start exploring!",
     "add": "Add to favorites",
     "remove": "Remove from favorites",
-    "error_toggle": "Failed to update favorites. Please try again."
+    "error_toggle": "Failed to update favorites. Please try again.",
+    "browse_dramas": "Browse Dramas",
+    "toast": {
+      "added": "Added to favorites",
+      "add_failed": "Failed to add favorite",
+      "removed": "Removed from favorites",
+      "remove_failed": "Failed to remove favorite",
+      "login_required": "Please log in to add favorites"
+    }
   },
   "comment": {
     "title": "Comments",
@@ -90,7 +123,20 @@
     "sort_latest": "Latest",
     "sort_hottest": "Hottest",
     "load_more": "Load more comments",
-    "char_count": "characters"
+    "char_count": "characters",
+    "sign_in_hint": "Sign in to leave a comment",
+    "login_link": "Log in",
+    "replying_to": "Replying to {name}",
+    "cancel": "Cancel",
+    "reply_placeholder": "Write a reply...",
+    "submit_hint": "⌘+Enter to submit",
+    "no_comments_yet": "No comments yet. Be the first to share your thoughts!",
+    "toast": {
+      "posted": "Comment posted",
+      "post_failed": "Failed to post comment",
+      "deleted": "Comment deleted",
+      "delete_failed": "Failed to delete"
+    }
   },
   "subscribe": {
     "title": "Choose Your Plan",
@@ -112,7 +158,19 @@
     "cancel": "Cancel Subscription",
     "status_active": "Active",
     "status_cancelled": "Cancelled",
-    "status_expired": "Expired"
+    "status_expired": "Expired",
+    "plan_not_found": "Plan not found",
+    "back_to_plans": "Back to plans",
+    "pay_amount": "Pay {price}",
+    "plan_label": "{name} Plan",
+    "toast": {
+      "redirecting": "Redirecting to payment...",
+      "create_failed": "Failed to create subscription",
+      "already_subscribed": "You already have an active subscription"
+    },
+    "already_subscribed_title": "Already Subscribed",
+    "already_subscribed_desc": "You have an active {plan} plan. Manage your subscription in your profile.",
+    "go_to_profile": "Go to profile"
   },
   "profile": {
     "title": "My Profile",
@@ -134,7 +192,22 @@
     "saving": "Saving...",
     "change_photo": "Change Photo",
     "nickname_label": "Nickname",
-    "profile_updated": "Profile updated"
+    "profile_updated": "Profile updated",
+    "not_logged_in": "Please log in to view your profile.",
+    "login": "Log in",
+    "log_out": "Log out",
+    "account": "Account",
+    "email_label": "Email",
+    "role_label": "Role",
+    "no_subscription": "No active subscription",
+    "subscribe_now": "Subscribe Now",
+    "back_to_profile": "Back to profile",
+    "toast": {
+      "subscription_cancelled": "Subscription cancelled",
+      "cancel_failed": "Failed to cancel",
+      "update_failed": "Failed to update profile",
+      "language_updated": "Language updated"
+    }
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -203,14 +276,41 @@
     "next": "Next",
     "previous": "Previous",
     "page": "Page",
-    "of": "of"
+    "of": "of",
+    "language": "Language",
+    "toggle_menu": "Toggle menu",
+    "favorited": "Favorited",
+    "add_to_favorites": "Add to Favorites",
+    "remove_from_favorites": "Remove from favorites"
   },
   "footer": {
     "about": "About",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "contact": "Contact Us",
-    "copyright": "© 2026 AIshort. All rights reserved."
+    "copyright": "© 2026 AIshort. All rights reserved.",
+    "tagline": "AI-powered short drama platform.",
+    "legal": "Legal",
+    "download": "Download",
+    "app_store": "App Store",
+    "google_play": "Google Play"
+  },
+  "error": {
+    "title": "Oops!",
+    "description": "Something went wrong",
+    "try_again": "Try again",
+    "go_home": "Go Home",
+    "not_found_title": "404",
+    "not_found_desc": "Page not found",
+    "not_found_text": "The page you're looking for doesn't exist or has been moved.",
+    "signing_in": "Signing you in..."
+  },
+  "upload": {
+    "unsupported_image": "Unsupported image format. Use JPG, PNG, or WebP.",
+    "image_too_large": "Image too large. Maximum size is 5 MB.",
+    "upload_failed": "Upload failed",
+    "change_photo": "Change Photo",
+    "avatar": "Avatar"
   },
   "language": {
     "en": "English",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { usePlayerStore } from "@/stores/player-store";
 import type { EpisodePlayInfo } from "@/lib/api/drama";
 import { reportView } from "@/lib/api/drama";
@@ -11,6 +12,7 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ playInfo }: VideoPlayerProps) {
+  const t = useTranslations("player");
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { currentQuality } = usePlayerStore();
@@ -155,7 +157,7 @@ export function VideoPlayer({ playInfo }: VideoPlayerProps) {
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <div className="text-center space-y-2">
-            <p className="text-red-400 text-sm font-medium">Video failed to load</p>
+            <p className="text-red-400 text-sm font-medium">{t("video_error")}</p>
             <p className="text-zinc-400 text-xs">{error}</p>
             <p className="text-zinc-500 text-xs truncate max-w-md px-4">{videoSrc}</p>
           </div>

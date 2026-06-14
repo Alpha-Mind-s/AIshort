@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Link } from "@/lib/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Play } from "lucide-react";
-import { formatCount } from "@/lib/utils/format";
 import { getImageUrl } from "@/lib/utils/image-url";
 import type { Drama } from "@/lib/api/drama";
 
@@ -11,7 +10,8 @@ interface HeroBannerProps {
 }
 
 export function HeroBanner({ drama }: HeroBannerProps) {
-  const t = useTranslations("home");
+  const t = useTranslations("drama");
+  const th = useTranslations("home");
 
   return (
     <section className="relative w-full h-[50vh] min-h-[320px] max-h-[500px] overflow-hidden rounded-xl">
@@ -41,8 +41,8 @@ export function HeroBanner({ drama }: HeroBannerProps) {
             {drama.description}
           </p>
           <div className="flex items-center gap-4 text-sm text-gray-400">
-            <span>{formatCount(drama.view_count)} views</span>
-            <span>{drama.total_episodes} episodes</span>
+            <span>{t("views_count", { count: drama.view_count })}</span>
+            <span>{t("episodes_count", { count: drama.total_episodes })}</span>
             {drama.tags.slice(0, 2).map((tag) => (
               <span key={tag} className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
                 {tag}
@@ -55,7 +55,7 @@ export function HeroBanner({ drama }: HeroBannerProps) {
               className="inline-flex items-center gap-2 h-10 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
             >
               <Play className="h-4 w-4" fill="currentColor" />
-              {t("browse_all")}
+              {th("browse_all")}
             </Link>
           </div>
         </div>

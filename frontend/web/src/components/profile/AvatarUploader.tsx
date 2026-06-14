@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getFileUploadUrl } from "@/lib/api/files";
@@ -13,6 +14,7 @@ interface AvatarUploaderProps {
 }
 
 export function AvatarUploader({ value, onChange, nickname, onUploading }: AvatarUploaderProps) {
+  const t = useTranslations("upload");
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -34,11 +36,11 @@ export function AvatarUploader({ value, onChange, nickname, onUploading }: Avata
       const maxSize = 5 * 1024 * 1024; // 5 MB
 
       if (!allowedTypes.includes(file.type)) {
-        setError("Unsupported format. Use JPG, PNG, or WebP.");
+        setError(t("unsupported_image"));
         return;
       }
       if (file.size > maxSize) {
-        setError("Image too large. Maximum size is 5 MB.");
+        setError(t("image_too_large"));
         return;
       }
 
@@ -75,7 +77,7 @@ export function AvatarUploader({ value, onChange, nickname, onUploading }: Avata
         // 3. Return the download URL to parent
         onChange(uploadRes.download_url);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload failed");
+        setError(e instanceof Error ? e.message : t("upload_failed"));
         setPreview(null);
       } finally {
         setUploadingState(false);
@@ -106,7 +108,7 @@ export function AvatarUploader({ value, onChange, nickname, onUploading }: Avata
         <div className="relative w-24 h-24 rounded-full overflow-hidden border border-border">
           <img
             src={imgSrc}
-            alt="Avatar"
+            alt={t("avatar")}
             className="w-full h-full object-cover"
           />
           {uploading && (
@@ -163,7 +165,7 @@ export function AvatarUploader({ value, onChange, nickname, onUploading }: Avata
         </span>
         <Camera className="absolute h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
-      <span className="text-xs text-muted-foreground">Change Photo</span>
+      <span className="text-xs text-muted-foreground">{t("change_photo")}</span>
       <input
         ref={inputRef}
         type="file"

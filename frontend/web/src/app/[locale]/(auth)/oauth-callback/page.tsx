@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/lib/i18n/navigation";
 import { useAuth } from "@/lib/auth/hooks";
 import type { OAuthProvider } from "@/lib/api/auth";
 
 export default function OAuthCallbackPage() {
+  const t = useTranslations("error");
   const searchParams = useSearchParams();
   const router = useRouter();
   const { oauthLogin } = useAuth();
@@ -29,7 +31,7 @@ export default function OAuthCallbackPage() {
   return (
     <div className="flex flex-col items-center justify-center space-y-4 py-12">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      <p className="text-sm text-muted-foreground">Signing you in...</p>
+      <p className="text-sm text-muted-foreground">{t("signing_in")}</p>
     </div>
   );
 }

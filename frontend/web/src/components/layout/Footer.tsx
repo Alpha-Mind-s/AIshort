@@ -18,7 +18,7 @@ export function Footer() {
               <span>AIshort</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              AI-powered short drama platform.
+              {t("tagline")}
             </p>
             <div className="mt-3">
               <LanguageSwitcher />
@@ -43,7 +43,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Legal</h4>
+            <h4 className="text-sm font-semibold">{t("legal")}</h4>
             <ul className="space-y-1">
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -59,16 +59,16 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Download</h4>
+            <h4 className="text-sm font-semibold">{t("download")}</h4>
             <ul className="space-y-1">
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  App Store
+                  {t("app_store")}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Google Play
+                  {t("google_play")}
                 </a>
               </li>
             </ul>

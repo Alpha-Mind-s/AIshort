@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/lib/i18n/navigation";
 import { formatDuration } from "@/lib/utils/format";
 import { Play, Clock } from "lucide-react";
@@ -12,6 +13,7 @@ interface EpisodeListProps {
 }
 
 export function EpisodeList({ episodes, dramaId }: EpisodeListProps) {
+  const t = useTranslations("drama");
   return (
     <div className="space-y-2">
       {episodes.map((ep) => (
@@ -37,7 +39,7 @@ export function EpisodeList({ episodes, dramaId }: EpisodeListProps) {
                 {formatDuration(ep.duration)}
               </span>
               {ep.localizations?.length > 0 && (
-                <span>{ep.localizations.length} languages</span>
+                <span>{t("languages_count", { count: ep.localizations.length })}</span>
               )}
             </div>
           </div>
@@ -47,12 +49,12 @@ export function EpisodeList({ episodes, dramaId }: EpisodeListProps) {
             {ep.status === "ready" ? (
               <span className="flex items-center gap-1 text-sm text-primary font-medium">
                 <Play className="h-4 w-4" fill="currentColor" />
-                <span className="hidden sm:inline">Watch</span>
+                <span className="hidden sm:inline">{t("watch")}</span>
               </span>
             ) : ep.status === "processing" ? (
-              <span className="text-xs text-yellow-500 font-medium">Processing...</span>
+              <span className="text-xs text-yellow-500 font-medium">{t("processing")}</span>
             ) : (
-              <span className="text-xs text-destructive font-medium">Failed</span>
+              <span className="text-xs text-destructive font-medium">{t("failed")}</span>
             )}
           </div>
         </Link>

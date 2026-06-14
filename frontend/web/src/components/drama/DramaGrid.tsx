@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { DramaCard } from "./DramaCard";
 import type { Drama } from "@/lib/api/drama";
 
@@ -6,10 +9,12 @@ interface DramaGridProps {
 }
 
 export function DramaGrid({ dramas }: DramaGridProps) {
+  const t = useTranslations("drama");
+
   if (dramas.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        No dramas found
+        {t("no_dramas")}
       </div>
     );
   }

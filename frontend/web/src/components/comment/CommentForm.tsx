@@ -27,13 +27,13 @@ export function CommentForm({
     return (
       <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
         <p className="text-sm text-muted-foreground mb-2">
-          Sign in to leave a comment
+          {t("sign_in_hint")}
         </p>
         <Link
           href="/login"
           className="text-sm font-medium text-primary hover:opacity-80"
         >
-          Log in
+          {t("login_link")}
         </Link>
       </div>
     );
@@ -50,12 +50,12 @@ export function CommentForm({
     <div className="space-y-2">
       {replyTo && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Replying to {replyTo}</span>
+          <span>{t("replying_to", { name: replyTo })}</span>
           <button
             onClick={onCancelReply}
             className="text-xs text-destructive hover:underline"
           >
-            Cancel
+            {t("cancel")}
           </button>
         </div>
       )}
@@ -63,7 +63,7 @@ export function CommentForm({
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder={replyTo ? "Write a reply..." : t("placeholder")}
+          placeholder={replyTo ? t("reply_placeholder") : t("placeholder")}
           rows={3}
           maxLength={2000}
           className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -83,7 +83,7 @@ export function CommentForm({
         </button>
       </div>
       <p className="text-xs text-muted-foreground text-right">
-        {content.length}/2000 {t("char_count")} · ⌘+Enter to submit
+        {content.length}/2000 {t("char_count")} · {t("submit_hint")}
       </p>
     </div>
   );

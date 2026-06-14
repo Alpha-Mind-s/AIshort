@@ -5,7 +5,21 @@ import { getComments, createComment, deleteComment, likeComment } from "@/lib/ap
 import { toast } from "sonner";
 import { useState } from "react";
 
-export function useComments(dramaId: number) {
+export interface CommentToastMessages {
+  posted: string;
+  postFailed: string;
+  deleted: string;
+  deleteFailed: string;
+}
+
+export function useComments(dramaId: number, tMessages?: CommentToastMessages) {
+  const msg = tMessages ?? {
+    posted: "Comment posted",
+    postFailed: "Failed to post comment",
+    deleted: "Comment deleted",
+    deleteFailed: "Failed to delete",
+  };
+
   const queryClient = useQueryClient();
   const [sort, setSort] = useState<"latest" | "hottest">("latest");
   const [page, setPage] = useState(1);
@@ -21,21 +35,21 @@ export function useComments(dramaId: number) {
 
   const addMutation = useMutation({
     mutationFn: ({ content, parentId }: { content: string; parentId?: number }) =>
-      createComment(dramaId, { content, parent_id: parentId ?? null }),
+      createComment(dramaId, { content, parent_id: parentId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", dramaId] });
-      toast.success("Comment posted");
+      toast.success(msg.posted);
     },
-    onError: () => toast.error("Failed to post comment"),
+    onError: () => toast.error(msg.postFailed),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteComment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", dramaId] });
-      toast.success("Comment deleted");
+      toast.success(msg.deleted);
     },
-    onError: () => toast.error("Failed to delete"),
+    onError: () => toast.error(msg.deleteFailed),
   });
 
   const likeMutation = useMutation({

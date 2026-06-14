@@ -45,7 +45,7 @@ export function WatchPageClient({
   useEffect(() => {
     getEpisodePlay(episodeId)
       .then(setPlayInfo)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load video"));
+      .catch((err) => setError(err instanceof Error ? err.message : t("failed_to_load")));
   }, [episodeId]);
 
   // Check subscription for episode 2+ gating
@@ -65,7 +65,7 @@ export function WatchPageClient({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-red-400 text-lg">Failed to load video</p>
+          <p className="text-red-400 text-lg">{t("failed_to_load")}</p>
           <p className="text-zinc-400 text-sm">{error}</p>
         </div>
       </div>
@@ -89,17 +89,16 @@ export function WatchPageClient({
         <div className="text-center space-y-6 max-w-md px-6">
           <Lock className="h-12 w-12 text-zinc-500 mx-auto" />
           <div className="space-y-2">
-            <p className="text-white text-xl font-semibold">Subscribe to Watch</p>
+            <p className="text-white text-xl font-semibold">{t("subscribe_to_watch")}</p>
             <p className="text-zinc-400 text-sm">
-              Episode 1 is free. Subscribe to unlock all episodes of{" "}
-              <span className="text-white">{dramaTitle}</span>.
+              {t("first_episode_free")}
             </p>
           </div>
           <button
             onClick={() => router.push(`/${locale}/subscribe`)}
             className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            View Plans
+            {t("view_plans")}
           </button>
         </div>
       </div>

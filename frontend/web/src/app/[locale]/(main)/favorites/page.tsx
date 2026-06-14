@@ -8,7 +8,13 @@ import { Link } from "@/lib/i18n/navigation";
 
 export default function FavoritesPage() {
   const t = useTranslations("favorites");
-  const { favorites, isLoading } = useFavorites();
+  const { favorites, isLoading } = useFavorites({
+    added: t("toast.added"),
+    addFailed: t("toast.add_failed"),
+    removed: t("toast.removed"),
+    removeFailed: t("toast.remove_failed"),
+    loginRequired: t("toast.login_required"),
+  });
 
   const dramas = favorites
     .filter((f) => f.drama)
@@ -34,7 +40,7 @@ export default function FavoritesPage() {
             href="/"
             className="text-sm font-medium text-primary hover:opacity-80 transition-opacity"
           >
-            Browse Dramas
+            {t("browse_dramas")}
           </Link>
         </div>
       </div>

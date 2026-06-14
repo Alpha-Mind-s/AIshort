@@ -5,7 +5,23 @@ import { useAuthStore } from "@/stores/auth-store";
 import { getFavorites, addFavorite, removeFavorite } from "@/lib/api/favorites";
 import { toast } from "sonner";
 
-export function useFavorites() {
+export interface FavoritesToastMessages {
+  added: string;
+  addFailed: string;
+  removed: string;
+  removeFailed: string;
+  loginRequired: string;
+}
+
+export function useFavorites(tMessages?: FavoritesToastMessages) {
+  const msg = tMessages ?? {
+    added: "Added to favorites",
+    addFailed: "Failed to add favorite",
+    removed: "Removed from favorites",
+    removeFailed: "Failed to remove favorite",
+    loginRequired: "Please log in to add favorites",
+  };
+
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -28,23 +44,23 @@ export function useFavorites() {
     mutationFn: addFavorite,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success("Added to favorites");
+      toast.success(msg.added);
     },
-    onError: () => toast.error("Failed to add favorite"),
+    onError: () => toast.error(msg.addFailed),
   });
 
   const removeMutation = useMutation({
     mutationFn: removeFavorite,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success("Removed from favorites");
+      toast.success(msg.removed);
     },
-    onError: () => toast.error("Failed to remove favorite"),
+    onError: () => toast.error(msg.removeFailed),
   });
 
   const toggleFavorite = (dramaId: number) => {
     if (!isAuthenticated) {
-      toast.error("Please log in to add favorites");
+      toast.error(msg.loginRequired);
       return;
     }
     if (isFavorited(dramaId)) {

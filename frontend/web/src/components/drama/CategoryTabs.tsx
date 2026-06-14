@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 
 interface Category {
@@ -19,6 +20,8 @@ export function CategoryTabs({
   selectedId,
   onSelect,
 }: CategoryTabsProps) {
+  const t = useTranslations("drama");
+
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
       <button
@@ -30,7 +33,7 @@ export function CategoryTabs({
             : "bg-muted text-muted-foreground hover:bg-muted/80"
         )}
       >
-        All
+        {t("all")}
       </button>
       {categories.map((cat) => (
         <button

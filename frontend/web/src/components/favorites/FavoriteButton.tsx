@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -15,7 +16,16 @@ export function FavoriteButton({
   className,
   variant = "icon",
 }: FavoriteButtonProps) {
-  const { isFavorited, toggleFavorite, isToggling } = useFavorites();
+  const t = useTranslations("common");
+  const tf = useTranslations("favorites");
+
+  const { isFavorited, toggleFavorite, isToggling } = useFavorites({
+    added: tf("toast.added"),
+    addFailed: tf("toast.add_failed"),
+    removed: tf("toast.removed"),
+    removeFailed: tf("toast.remove_failed"),
+    loginRequired: tf("toast.login_required"),
+  });
 
   const favorited = isFavorited(dramaId);
 
@@ -35,7 +45,7 @@ export function FavoriteButton({
         <Heart
           className={cn("h-4 w-4", favorited && "fill-current")}
         />
-        {favorited ? "Favorited" : "Add to Favorites"}
+        {favorited ? t("favorited") : t("add_to_favorites")}
       </button>
     );
   }
@@ -49,7 +59,7 @@ export function FavoriteButton({
         favorited && "text-red-500",
         className
       )}
-      aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={favorited ? t("remove_from_favorites") : t("add_to_favorites")}
     >
       <Heart
         className={cn(

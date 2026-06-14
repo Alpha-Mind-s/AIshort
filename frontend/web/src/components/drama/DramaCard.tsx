@@ -1,6 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Link } from "@/lib/i18n/navigation";
-import { formatCount } from "@/lib/utils/format";
 import { getImageUrl } from "@/lib/utils/image-url";
 import { Play } from "lucide-react";
 import type { Drama } from "@/lib/api/drama";
@@ -10,6 +12,7 @@ interface DramaCardProps {
 }
 
 export function DramaCard({ drama }: DramaCardProps) {
+  const t = useTranslations("drama");
   return (
     <Link
       href={`/drama/${drama.id}`}
@@ -38,7 +41,7 @@ export function DramaCard({ drama }: DramaCardProps) {
         </div>
         {/* Episode count badge */}
         <span className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-xs text-white">
-          {drama.total_episodes} ep
+          {t("ep_abbr", { count: drama.total_episodes })}
         </span>
         {/* Status badge */}
         {drama.status !== "published" && (
@@ -55,7 +58,7 @@ export function DramaCard({ drama }: DramaCardProps) {
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{drama.category_id}</span>
-          <span>{formatCount(drama.view_count)} views</span>
+          <span>{t("views_count", { count: drama.view_count })}</span>
         </div>
         {drama.tags?.length > 0 && (
           <div className="flex gap-1 flex-wrap">

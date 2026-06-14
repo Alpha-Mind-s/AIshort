@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useRouter as useIntlRouter } from "@/lib/i18n/navigation";
-import { getPlans, createSubscription, type SubscriptionPlan } from "@/lib/api/subscriptions";
+import { getPlans, getSubscriptionStatus, createSubscription, type SubscriptionPlan } from "@/lib/api/subscriptions";
 import { formatCurrency } from "@/lib/utils/format";
 import { useState } from "react";
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react";
@@ -23,6 +23,11 @@ export default function CheckoutPage() {
     queryFn: getPlans,
   });
 
+  const { data: currentSub } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: getSubscriptionStatus,
+  });
+
   const plan = plans?.find((p) => p.name === planName);
 
   const createMutation = useMutation({
@@ -34,20 +39,42 @@ export default function CheckoutPage() {
       }),
     onSuccess: (data) => {
       // In production, redirect to the payment URL
-      toast.success("Redirecting to payment...");
+      toast.success(t("toast.redirecting"));
       setTimeout(() => {
         window.location.href = data.payment_url;
       }, 1000);
     },
-    onError: () => toast.error("Failed to create subscription"),
+    onError: (err) => {
+      // 409 = already has active subscription
+      if ((err as { code?: number }).code === 40001) {
+        toast.error(t("toast.already_subscribed"));
+      } else {
+        toast.error(t("toast.create_failed"));
+      }
+    },
   });
 
   if (!plan) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="text-muted-foreground">Plan not found</p>
+        <p className="text-muted-foreground">{t("plan_not_found")}</p>
         <Link href="/subscribe" className="text-primary text-sm">
-          Back to plans
+          {t("back_to_plans")}
+        </Link>
+      </div>
+    );
+  }
+
+  // Already subscribed — don't let them pay twice
+  if (currentSub && currentSub.status === "active") {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
+        <h2 className="text-xl font-bold">{t("already_subscribed_title")}</h2>
+        <p className="text-muted-foreground">
+          {t("already_subscribed_desc", { plan: currentSub.plan_type })}
+        </p>
+        <Link href="/profile" className="inline-block text-primary text-sm hover:underline">
+          {t("go_to_profile")}
         </Link>
       </div>
     );
@@ -61,14 +88,14 @@ export default function CheckoutPage() {
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to plans
+        {t("back_to_plans")}
       </Link>
 
       {/* Selected plan summary */}
       <div className="rounded-xl border border-border bg-card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold capitalize">{plan.name} Plan</h2>
+            <h2 className="text-lg font-bold capitalize">{t("plan_label", { name: plan.name })}</h2>
             <p className="text-sm text-muted-foreground">{plan.description}</p>
           </div>
           <span className="text-2xl font-bold">
@@ -115,7 +142,7 @@ export default function CheckoutPage() {
         {createMutation.isPending ? (
           <Loader2 className="h-5 w-5 animate-spin" />
         ) : null}
-        Pay {formatCurrency(plan.price)}
+        {t("pay_amount", { price: formatCurrency(plan.price) })}
       </button>
     </div>
   );

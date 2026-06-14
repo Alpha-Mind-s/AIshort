@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils/cn";
 
 export function Navbar() {
   const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -96,7 +97,7 @@ export function Navbar() {
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden p-1 text-muted-foreground hover:text-foreground"
-              aria-label="Toggle menu"
+              aria-label={tc("toggle_menu")}
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>

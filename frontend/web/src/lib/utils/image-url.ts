@@ -1,25 +1,24 @@
 /**
  * Rewrite image URLs so they work both in the browser and inside Docker.
  *
- * Problem: cover/video URLs in the DB use `http://localhost:8080/files/...`.
- * - Browser:  localhost:8080 → Docker port forward → gateway  ✅
- * - Next.js server (inside Docker): localhost:8080 → container itself  ❌
+ * Problem: cover/video URLs in the DB may use either hostname depending on
+ * the upload context. We need the URL that actually resolves:
+ * - Host-based dev: api-gateway:8080 → localhost:8080 (Docker port forward)
+ * - Docker-based dev: localhost:8080 → api-gateway:8080 (Docker DNS)
  *
- * Solution: rewrite localhost:8080 → api-gateway:8080 for server-side fetches.
  * This is a dev-only concern; production uses a real CDN hostname.
  */
 
-const DEV_REWRITE_FROM = "http://localhost:8080/";
-const DEV_REWRITE_TO = "http://api-gateway:8080/";
+const DOCKER_HOST = "http://api-gateway:8080/";
+const LOCALHOST = "http://localhost:8080/";
 
 /**
  * Returns an image URL suitable for Next.js Image optimization.
  *
- * Always rewrites localhost → api-gateway because the Next.js image optimizer
- * (/_next/image) fetches the source image server-side inside Docker, where
- * localhost:8080 points to the container itself, not the gateway.
+ * Normalizes Docker hostname → localhost so it works in host-based dev
+ * (browser fetches through Docker port-forward, server fetches directly).
  */
 export function getImageUrl(url: string | null | undefined): string {
   if (!url) return "";
-  return url.replace(DEV_REWRITE_FROM, DEV_REWRITE_TO);
+  return url.replace(DOCKER_HOST, LOCALHOST);
 }
