@@ -16,9 +16,9 @@ export function DramaCard({ drama }: DramaCardProps) {
   return (
     <Link
       href={`/drama/${drama.id}`}
-      className="group block rounded-lg overflow-hidden border border-border bg-card hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
+      className="group block rounded-xl overflow-hidden border border-border/50 bg-card hover:shadow-lg transition-all duration-300 ease-out hover:-translate-y-1"
     >
-      {/* Cover */}
+      {/* Cover — poster aspect ratio */}
       <div className="relative aspect-[2/3] bg-muted overflow-hidden">
         {drama.cover_url ? (
           <Image
@@ -26,46 +26,52 @@ export function DramaCard({ drama }: DramaCardProps) {
             alt={drama.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
-            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-            </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 p-4">
+            <span className="text-muted-foreground/30 text-6xl font-extrabold tracking-tighter select-none">
+              AI
+            </span>
           </div>
         )}
-        {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-          <Play className="h-10 w-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="white" />
+
+        {/* Hover play overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
+          <Play
+            className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100"
+            fill="white"
+          />
         </div>
-        {/* Episode count badge */}
-        <span className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-xs text-white">
+
+        {/* Episode count badge — glass */}
+        <span className="absolute bottom-2 right-2 glass rounded-full px-2.5 py-1 text-[11px] font-medium text-white/90">
           {t("ep_abbr", { count: drama.total_episodes })}
         </span>
+
         {/* Status badge */}
         {drama.status !== "published" && (
-          <span className="absolute top-2 left-2 rounded bg-yellow-500 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="absolute top-2 left-2 rounded-full bg-yellow-500/90 px-2.5 py-1 text-[11px] font-semibold text-white">
             {drama.status}
           </span>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-1.5">
-        <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
+      <div className="p-4 space-y-2">
+        <h3 className="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors">
           {drama.title}
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span>{drama.category_id}</span>
           <span>{t("views_count", { count: drama.view_count })}</span>
         </div>
+        {/* Tags — subtle, glass-style on dark */}
         {drama.tags?.length > 0 && (
-          <div className="flex gap-1 flex-wrap">
-            {drama.tags.slice(0, 2).map((tag) => (
+          <div className="flex gap-1.5 flex-wrap pt-0.5">
+            {drama.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                className="inline-block rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
               >
                 {tag}
               </span>

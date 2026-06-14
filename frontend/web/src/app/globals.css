@@ -1,38 +1,68 @@
 @import "tailwindcss";
 @import "video.js/dist/video-js.css";
 
+/* ===================================================================
+   AIshot Design System — Cinematic Dark · Bold · Immersive
+   Warm-dark theater palette. Product-first with brand confidence.
+   =================================================================== */
+
+/* ---- Light mode (refined, high readability) ---- */
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --primary: #7c3aed;
+  --background: #fafaf9;
+  --foreground: #0f0d0b;
+  --primary: oklch(55% 0.22 280);
   --primary-foreground: #ffffff;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --border: #e4e4e7;
-  --ring: #a78bfa;
+  --muted: #f0efed;
+  --muted-foreground: oklch(28% 0.02 280);
+  --border: #e0deda;
+  --ring: oklch(58% 0.22 280 / 40%);
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
-  --destructive: #ef4444;
+  --card-foreground: #1c1917;
+  --destructive: oklch(48% 0.18 20);
   --destructive-foreground: #ffffff;
+  --success: oklch(52% 0.13 160);
+  --success-foreground: #ffffff;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
 }
 
+/* ---- Dark mode (cinematic theater, high readability) ---- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #fafafa;
-    --primary: #8b5cf6;
+    --background: oklch(12% 0.01 280);
+    --foreground: oklch(94% 0 0);
+    --primary: oklch(64% 0.22 280);
     --primary-foreground: #ffffff;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --border: #27272a;
-    --ring: #7c3aed;
-    --card: #18181b;
-    --card-foreground: #fafafa;
-    --destructive: #ef4444;
+    --muted: oklch(18% 0.01 280);
+    --muted-foreground: oklch(74% 0.01 280);
+    --border: oklch(24% 0.01 280);
+    --ring: oklch(64% 0.22 280 / 35%);
+    --card: oklch(15% 0.01 280);
+    --card-foreground: oklch(94% 0 0);
+    --destructive: oklch(48% 0.16 20);
     --destructive-foreground: #ffffff;
+    --success: oklch(52% 0.12 160);
+    --success-foreground: #ffffff;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+    --shadow-xl: 0 16px 56px rgba(0, 0, 0, 0.6);
   }
 }
 
+/* ---- Tailwind v4 theme bridge ---- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -46,26 +76,56 @@
   --color-card-foreground: var(--card-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
 }
 
+/* ---- Base ---- */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+  font-weight: 425;
 }
 
-/* Video.js overrides */
-.video-js {
-  font-family: var(--font-sans, Arial, Helvetica, sans-serif) !important;
+/* ---- Typography refinements ---- */
+h1, h2, h3, h4 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
 }
 
-/* Scrollbar styling */
+p {
+  text-wrap: pretty;
+}
+
+/* ---- Focus ring — unified, on-brand ---- */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---- Selection ---- */
+::selection {
+  background: oklch(62% 0.22 280 / 25%);
+  color: var(--foreground);
+}
+
+/* ---- Scrollbar (cinematic) ---- */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -73,4 +133,98 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--muted-foreground);
   border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* ---- Video.js overrides ---- */
+.video-js {
+  font-family: var(--font-sans, Arial, Helvetica, sans-serif) !important;
+}
+
+/* ===================================================================
+   Animation utilities (zero JS, pure CSS)
+   =================================================================== */
+
+/* Shimmer skeleton loader */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    var(--card) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Fade-in on mount */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in var(--duration-slow) var(--ease-out) both;
+}
+
+/* Stagger children */
+.animate-stagger > * {
+  --stagger-delay: 0ms;
+  animation: fade-in var(--duration-slow) var(--ease-out) both;
+  animation-delay: var(--stagger-delay);
+}
+.animate-stagger > *:nth-child(1) { --stagger-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { --stagger-delay: 80ms; }
+.animate-stagger > *:nth-child(3) { --stagger-delay: 160ms; }
+.animate-stagger > *:nth-child(4) { --stagger-delay: 240ms; }
+.animate-stagger > *:nth-child(5) { --stagger-delay: 320ms; }
+.animate-stagger > *:nth-child(6) { --stagger-delay: 400ms; }
+
+/* Scale-up hover utility (for clickable cards) */
+.hover-lift {
+  transition: transform var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Glow ring for primary buttons */
+.btn-glow {
+  transition: box-shadow var(--duration-normal) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+.btn-glow:hover {
+  box-shadow: 0 0 24px oklch(62% 0.22 280 / 30%);
+  transform: translateY(-1px);
+}
+.btn-glow:active {
+  transform: translateY(0);
+}
+
+/* Glass surface (for overlays, badges) */
+.glass {
+  background: oklch(100% 0 0 / 6%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+@media (prefers-color-scheme: light) {
+  .glass {
+    background: oklch(100% 0 0 / 60%);
+  }
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

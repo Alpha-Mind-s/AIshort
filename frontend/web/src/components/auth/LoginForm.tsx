@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { loginSchema, zodResolver, type LoginFormData } from "@/lib/auth/schemas";
 import { useAuth } from "@/lib/auth/hooks";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm() {
   const t = useTranslations("auth");
@@ -24,7 +25,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Email */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium">
           {t("email")}
         </label>
@@ -33,7 +34,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           placeholder="test@example.com"
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          className="flex h-11 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground/70 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           {...register("email")}
         />
         {errors.email && (
@@ -42,7 +43,7 @@ export function LoginForm() {
       </div>
 
       {/* Password */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label htmlFor="password" className="text-sm font-medium">
           {t("password")}
         </label>
@@ -50,8 +51,8 @@ export function LoginForm() {
           id="password"
           type="password"
           autoComplete="current-password"
-          placeholder="password123"
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          placeholder="••••••••"
+          className="flex h-11 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground/70 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           {...register("password")}
         />
         {errors.password && (
@@ -65,8 +66,11 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isLoggingIn}
-        className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground btn-glow disabled:opacity-50 disabled:cursor-not-allowed"
       >
+        {isLoggingIn ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : null}
         {isLoggingIn ? tc("loading") : t("submit_login")}
       </button>
     </form>

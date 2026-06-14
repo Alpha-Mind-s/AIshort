@@ -26,9 +26,10 @@ export function HomePageClient({ categories }: Props) {
   });
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{t("popular")}</h2>
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="h-1 w-8 rounded-full bg-primary" />
+        <h2 className="text-xl font-bold tracking-tight">{t("popular")}</h2>
       </div>
       <CategoryTabs
         categories={categories}

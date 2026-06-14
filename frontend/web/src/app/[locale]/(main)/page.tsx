@@ -29,7 +29,6 @@ async function fetchDramaList(
 export default async function HomePage() {
   const t = await getTranslations("home");
 
-  // Fetch trending, latest dramas and categories in parallel from real API
   const [trending, latest, categories] = await Promise.all([
     fetchDramaList("trending"),
     fetchDramaList("latest"),
@@ -43,21 +42,27 @@ export default async function HomePage() {
       {/* Hero Banner */}
       {heroDrama && <HeroBanner drama={heroDrama} />}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-14">
         {/* Trending section */}
         <section>
-          <h2 className="text-2xl font-bold mb-4">{t("trending")}</h2>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-1 w-8 rounded-full bg-primary" />
+            <h2 className="text-xl font-bold tracking-tight">{t("trending")}</h2>
+          </div>
           <DramaGrid dramas={trending.data} />
         </section>
 
         {/* Latest section */}
         <section>
-          <h2 className="text-2xl font-bold mb-4">{t("latest")}</h2>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-1 w-8 rounded-full bg-primary" />
+            <h2 className="text-xl font-bold tracking-tight">{t("latest")}</h2>
+          </div>
           <DramaGrid dramas={latest.data} />
         </section>
       </div>
 
-      {/* Client-only interactive filter section */}
+      {/* Client-only category filter section */}
       <HomePageClient categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))} />
     </div>
   );

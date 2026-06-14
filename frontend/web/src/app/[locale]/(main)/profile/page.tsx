@@ -12,7 +12,7 @@ import { Link } from "@/lib/i18n/navigation";
 import { useRouter, usePathname } from "@/lib/i18n/navigation";
 import { LOCALES } from "@/lib/utils/constants";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
-import { Settings, LogOut, Crown, Calendar, CreditCard, Edit3, X } from "lucide-react";
+import { Settings, LogOut, Crown, Calendar, CreditCard, Edit3, X, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 
 const FLAGS: Record<string, string> = {
@@ -53,7 +53,6 @@ export default function ProfilePage() {
       toast.success(t("profile_updated"));
       setIsEditing(false);
 
-      // If language changed, navigate to the new locale
       if (updatedUser.language && updatedUser.language !== user?.language) {
         router.replace(pathname, { locale: updatedUser.language });
       }
@@ -88,16 +87,22 @@ export default function ProfilePage() {
   };
 
   const statusLabels: Record<string, string> = {
-    active: t("subscription.status_active") as unknown as string,
-    cancelled: t("subscription.status_cancelled") as unknown as string,
-    expired: t("subscription.status_expired") as unknown as string,
+    active: t("subscription.status_active"),
+    cancelled: t("subscription.status_cancelled"),
+    expired: t("subscription.status_expired"),
   };
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-muted-foreground">{t("not_logged_in")}</p>
-        <Link href="/login" className="text-primary text-sm">
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+        <div className="h-20 w-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+          <User className="h-10 w-10 text-muted-foreground/40" />
+        </div>
+        <p className="text-muted-foreground mb-4">{t("not_logged_in")}</p>
+        <Link
+          href="/login"
+          className="inline-flex items-center rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground btn-glow"
+        >
           {t("login")}
         </Link>
       </div>
@@ -105,126 +110,136 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 space-y-8 animate-fade-in">
       {/* Profile header */}
-      <div className="flex items-center gap-4">
-        {isEditing ? (
-          <AvatarUploader
-            value={formAvatarUrl}
-            onChange={setFormAvatarUrl}
-            nickname={formNickname || user.nickname}
-            onUploading={setIsUploading}
-          />
-        ) : user.avatar_url ? (
-          <img
-            src={user.avatar_url}
-            alt={user.nickname}
-            className="h-16 w-16 rounded-full object-cover"
-          />
-        ) : (
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-            {user.nickname.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div className="flex-1">
+      <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <div className="flex items-start gap-5">
+          {/* Avatar */}
           {isEditing ? (
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={formNickname}
-                onChange={(e) => setFormNickname(e.target.value)}
-                maxLength={100}
-                placeholder={t("nickname_label") as unknown as string}
-                className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+            <AvatarUploader
+              value={formAvatarUrl}
+              onChange={setFormAvatarUrl}
+              nickname={formNickname || user.nickname}
+              onUploading={setIsUploading}
+            />
+          ) : user.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={user.nickname}
+              className="h-16 w-16 rounded-full object-cover ring-2 ring-border"
+            />
           ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{user.nickname}</h1>
-                <button
-                  onClick={enterEditMode}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  {t("edit_profile") as unknown as string}
-                </button>
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary ring-2 ring-primary/20">
+              {user.nickname.charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            {isEditing ? (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={formNickname}
+                  onChange={(e) => setFormNickname(e.target.value)}
+                  maxLength={100}
+                  placeholder={t("nickname_label")}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-2 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow"
+                />
               </div>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("member_since")} {formatDate(user.created_at)}
-              </p>
-            </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold tracking-tight">{user.nickname}</h1>
+                  <button
+                    onClick={enterEditMode}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors rounded-lg px-2.5 py-1 hover:bg-muted/50"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    {t("edit_profile")}
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {t("member_since")} {formatDate(user.created_at)}
+                </p>
+              </>
+            )}
+          </div>
+
+          {isEditing && (
+            <button
+              onClick={cancelEdit}
+              className="shrink-0 p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           )}
         </div>
-        {isEditing && (
-          <button
-            onClick={cancelEdit}
-            className="self-start p-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
-      </div>
 
-      {/* Language & Region — editable in edit mode */}
-      {isEditing && (
-        <section className="rounded-xl border border-border bg-card p-6 space-y-4">
-          {/* Language */}
-          <div>
-            <label className="block text-sm font-medium mb-2">{t("language") as unknown as string}</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {LOCALES.map((loc) => (
-                <button
-                  key={loc}
-                  type="button"
-                  onClick={() => setFormLanguage(loc)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    formLanguage === loc
-                      ? "border-primary bg-primary/5 font-medium text-primary"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <span>{FLAGS[loc]}</span>
-                  {loc.toUpperCase()}
-                </button>
-              ))}
+        {/* Language & Region — edit mode only */}
+        {isEditing && (
+          <div className="mt-6 pt-6 border-t border-border space-y-5">
+            {/* Language */}
+            <div>
+              <label className="block text-sm font-medium mb-2.5">{t("language")}</label>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {LOCALES.map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => setFormLanguage(loc)}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      formLanguage === loc
+                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    <span className="text-base">{FLAGS[loc]}</span>
+                    <span className="text-xs">{loc.toUpperCase()}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Region */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t("region")}</label>
+              <select
+                value={formRegion}
+                onChange={(e) => setFormRegion(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow"
+              >
+                <option value="US">United States</option>
+                <option value="ES">España</option>
+                <option value="BR">Brasil</option>
+                <option value="JP">日本</option>
+                <option value="KR">한국</option>
+                <option value="GB">United Kingdom</option>
+                <option value="FR">France</option>
+                <option value="DE">Deutschland</option>
+                <option value="MX">México</option>
+              </select>
             </div>
           </div>
+        )}
+      </section>
 
-          {/* Region */}
-          <div>
-            <label className="block text-sm font-medium mb-1">{t("region") as unknown as string}</label>
-            <select
-              value={formRegion}
-              onChange={(e) => setFormRegion(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="US">United States</option>
-              <option value="ES">España</option>
-              <option value="BR">Brasil</option>
-              <option value="JP">日本</option>
-              <option value="KR">한국</option>
-              <option value="GB">United Kingdom</option>
-              <option value="FR">France</option>
-              <option value="DE">Deutschland</option>
-              <option value="MX">México</option>
-            </select>
-          </div>
-        </section>
-      )}
-
-      {/* Edit mode: email + role (read-only) */}
+      {/* Account info — edit mode only */}
       {isEditing && (
-        <section className="rounded-xl border border-border bg-card p-6 space-y-3">
-          <h2 className="text-lg font-semibold">{t("account")}</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-3">
+          <h2 className="text-lg font-bold tracking-tight">{t("account")}</h2>
+          <div className="grid grid-cols-2 gap-6 text-sm">
             <div>
-              <span className="text-muted-foreground">{t("email_label")}</span>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                {t("email_label")}
+              </p>
               <p className="font-medium">{user.email}</p>
             </div>
             <div>
-              <span className="text-muted-foreground">{t("role_label")}</span>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                {t("role_label")}
+              </p>
               <p className="font-medium capitalize">{user.role}</p>
             </div>
           </div>
@@ -232,32 +247,41 @@ export default function ProfilePage() {
       )}
 
       {/* Subscription status */}
-      <section className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Crown className="h-5 w-5 text-yellow-500" />
-          <h2 className="text-lg font-semibold">{t("my_subscription")}</h2>
+      <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+            <Crown className="h-5 w-5 text-yellow-500" />
+          </div>
+          <h2 className="text-lg font-bold tracking-tight">{t("my_subscription")}</h2>
         </div>
 
         {subLoading ? (
-          <div className="h-16 bg-muted animate-pulse rounded" />
-        ) : subscription ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="h-5 bg-muted rounded-md animate-shimmer w-2/3" />
+            <div className="h-4 bg-muted rounded-md animate-shimmer w-1/3" />
+          </div>
+        ) : subscription ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-4 text-sm">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  {formatDate(subscription.start_at)} — {formatDate(subscription.end_at)}
+                  <span className="text-muted-foreground">
+                    {formatDate(subscription.start_at)} — {formatDate(subscription.end_at)}
+                  </span>
                 </span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  subscription.status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}>
+                <span
+                  className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    subscription.status === "active"
+                      ? "bg-success/10 text-success"
+                      : "bg-yellow-500/10 text-yellow-600"
+                  }`}
+                >
                   {statusLabels[subscription.status] ?? subscription.status}
                 </span>
               </div>
-              <span className="text-sm font-medium capitalize flex items-center gap-1">
-                <CreditCard className="h-4 w-4" />
+              <span className="text-sm font-semibold capitalize flex items-center gap-1.5">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
                 {subscription.plan_type}
               </span>
             </div>
@@ -265,20 +289,19 @@ export default function ProfilePage() {
               <button
                 onClick={() => cancelMutation.mutate()}
                 disabled={cancelMutation.isPending}
-                className="text-sm text-destructive hover:underline"
+                className="text-sm font-medium text-destructive hover:underline disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                {t("subscription.cancel") as unknown as string}
+                {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {t("subscription.cancel")}
               </button>
             )}
           </div>
         ) : (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              {t("no_subscription")}
-            </p>
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground mb-4">{t("no_subscription")}</p>
             <Link
               href="/subscribe"
-              className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground btn-glow"
             >
               {t("subscribe_now")}
             </Link>
@@ -286,41 +309,47 @@ export default function ProfilePage() {
         )}
       </section>
 
-      {/* Edit mode: Save / Cancel buttons */}
+      {/* Save / Cancel — edit mode */}
       {isEditing && (
         <div className="flex gap-3">
           <button
             onClick={handleSave}
             disabled={isUploading || saveMutation.isPending}
-            className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground btn-glow disabled:opacity-50 transition-opacity"
           >
-            {saveMutation.isPending ? (t("saving") as unknown as string) : (t("save") as unknown as string)}
+            {saveMutation.isPending
+              ? t("saving")
+              : t("save")}
           </button>
           <button
             onClick={cancelEdit}
             disabled={saveMutation.isPending}
-            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+            className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
           >
-            {t("cancel_edit") as unknown as string}
+            {t("cancel_edit")}
           </button>
         </div>
       )}
 
-      {/* Actions — only show in read-only mode */}
+      {/* Actions — read-only mode */}
       {!isEditing && (
         <div className="space-y-2">
           <Link
             href="/profile/settings"
-            className="flex items-center gap-3 rounded-lg border border-border p-4 hover:bg-muted transition-colors"
+            className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors"
           >
-            <Settings className="h-5 w-5 text-muted-foreground" />
+            <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center">
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </div>
             <span className="text-sm font-medium">{t("settings")}</span>
           </Link>
           <button
             onClick={logout}
-            className="flex items-center gap-3 w-full rounded-lg border border-border p-4 hover:bg-muted transition-colors text-left"
+            className="flex items-center gap-3 w-full rounded-xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors text-left"
           >
-            <LogOut className="h-5 w-5 text-muted-foreground" />
+            <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <LogOut className="h-5 w-5 text-destructive" />
+            </div>
             <span className="text-sm font-medium">{t("log_out")}</span>
           </button>
         </div>

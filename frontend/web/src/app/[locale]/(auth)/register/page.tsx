@@ -7,13 +7,13 @@ export default function RegisterPage() {
   const t = useTranslations("auth");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">{t("register_title")}</h1>
         <p className="text-sm text-muted-foreground">{t("register_subtitle")}</p>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <RegisterForm />
       </div>
 
@@ -23,7 +23,7 @@ export default function RegisterPage() {
         {t("has_account")}{" "}
         <Link
           href="/login"
-          className="font-medium text-primary hover:opacity-80 transition-opacity"
+          className="font-semibold text-primary hover:opacity-80 transition-opacity"
         >
           {t("submit_login")}
         </Link>

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Link } from "@/lib/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { Play } from "lucide-react";
+import { Play, Eye, Film } from "lucide-react";
 import { getImageUrl } from "@/lib/utils/image-url";
 import type { Drama } from "@/lib/api/drama";
 
@@ -14,7 +14,7 @@ export function HeroBanner({ drama }: HeroBannerProps) {
   const th = useTranslations("home");
 
   return (
-    <section className="relative w-full h-[50vh] min-h-[320px] max-h-[500px] overflow-hidden rounded-xl">
+    <section className="relative w-full h-[55vh] min-h-[360px] max-h-[560px] overflow-hidden rounded-2xl">
       {/* Background image */}
       {drama.cover_url ? (
         <Image
@@ -26,33 +26,52 @@ export function HeroBanner({ drama }: HeroBannerProps) {
           className="object-cover"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />
       )}
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+
+      {/* Cinematic gradient overlay — always dark, works in both light/dark mode */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/10" />
+      {/* Side vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgb(0,0,0,0.85)_95%)]" />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-        <div className="max-w-2xl space-y-3">
-          <h2 className="text-2xl md:text-4xl font-bold text-white">
+      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+        <div className="max-w-2xl space-y-4">
+          {/* Title — bold, tight tracking, cinematic */}
+          <h2 className="text-2xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
             {drama.title}
           </h2>
-          <p className="text-sm md:text-base text-gray-300 line-clamp-2">
+
+          {/* Description */}
+          <p className="text-sm md:text-base text-gray-300 line-clamp-2 max-w-lg leading-relaxed">
             {drama.description}
           </p>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <span>{t("views_count", { count: drama.view_count })}</span>
-            <span>{t("episodes_count", { count: drama.total_episodes })}</span>
+
+          {/* Meta row — dark glass badges (readable in both modes) */}
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs bg-black/25 backdrop-blur text-white">
+              <Eye className="h-3.5 w-3.5" />
+              {t("views_count", { count: drama.view_count })}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs bg-black/25 backdrop-blur text-white">
+              <Film className="h-3.5 w-3.5" />
+              {t("episodes_count", { count: drama.total_episodes })}
+            </span>
             {drama.tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
+              <span
+                key={tag}
+                className="rounded-full px-3 py-1 text-xs bg-black/25 backdrop-blur text-white"
+              >
                 {tag}
               </span>
             ))}
           </div>
-          <div className="flex gap-3 pt-2">
+
+          {/* CTA — glow button */}
+          <div className="pt-2">
             <Link
               href={`/drama/${drama.id}`}
-              className="inline-flex items-center gap-2 h-10 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 h-11 rounded-xl bg-primary px-7 text-sm font-semibold text-primary-foreground btn-glow"
             >
               <Play className="h-4 w-4" fill="currentColor" />
               {th("browse_all")}

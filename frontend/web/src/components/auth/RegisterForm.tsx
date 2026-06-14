@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { registerSchema, zodResolver, type RegisterFormData } from "@/lib/auth/schemas";
 import { useAuth } from "@/lib/auth/hooks";
+import { Loader2 } from "lucide-react";
 
 export function RegisterForm() {
   const t = useTranslations("auth");
@@ -23,9 +24,9 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Nickname */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label htmlFor="nickname" className="text-sm font-medium">
           {t("nickname")}
         </label>
@@ -33,7 +34,8 @@ export function RegisterForm() {
           id="nickname"
           type="text"
           autoComplete="name"
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          placeholder="Your name"
+          className="flex h-11 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground/70 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           {...register("nickname")}
         />
         {errors.nickname && (
@@ -44,7 +46,7 @@ export function RegisterForm() {
       </div>
 
       {/* Email */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium">
           {t("email")}
         </label>
@@ -52,7 +54,8 @@ export function RegisterForm() {
           id="email"
           type="email"
           autoComplete="email"
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          placeholder="test@example.com"
+          className="flex h-11 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground/70 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           {...register("email")}
         />
         {errors.email && (
@@ -61,7 +64,7 @@ export function RegisterForm() {
       </div>
 
       {/* Password */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label htmlFor="password" className="text-sm font-medium">
           {t("password")}
         </label>
@@ -69,7 +72,8 @@ export function RegisterForm() {
           id="password"
           type="password"
           autoComplete="new-password"
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          placeholder="••••••••"
+          className="flex h-11 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground/70 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           {...register("password")}
         />
         {errors.password && (
@@ -83,8 +87,11 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={isRegistering}
-        className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground btn-glow disabled:opacity-50 disabled:cursor-not-allowed"
       >
+        {isRegistering ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : null}
         {isRegistering ? tc("loading") : t("submit_register")}
       </button>
     </form>
