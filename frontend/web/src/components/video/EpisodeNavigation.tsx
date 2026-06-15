@@ -56,22 +56,22 @@ export function EpisodeNavigation({
         <summary className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
           {t("episode_list")} ({episodes.length})
         </summary>
-        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto rounded-md border border-border bg-card p-2">
+        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto rounded-md border border-border bg-card/90 p-2">
           {sorted.map((ep) => (
             <Link
               key={ep.id}
               href={`/drama/${dramaId}/watch/${ep.id}`}
               className={`flex items-center justify-between rounded px-3 py-2 text-sm transition-colors hover:bg-muted ${
                 ep.id === currentEpisodeId
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground"
+                  ? "bg-primary/15 text-primary font-semibold border border-primary/20"
+                  : "text-foreground/80 hover:text-foreground"
               } ${ep.status !== "ready" ? "opacity-40 pointer-events-none" : ""}`}
             >
               <span>
                 Ep. {ep.episode_no} — {ep.title}
               </span>
               {ep.id === currentEpisodeId && (
-                <span className="text-xs text-primary">▶ Now</span>
+                <span className="text-xs text-primary font-medium">{t("now_playing")}</span>
               )}
             </Link>
           ))}

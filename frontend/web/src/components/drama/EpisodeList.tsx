@@ -26,8 +26,8 @@ export function EpisodeList({ episodes, dramaId }: EpisodeListProps) {
           )}
         >
           {/* Episode number */}
-          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-            <span className="text-sm font-bold">{ep.episode_no}</span>
+          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary group-hover:border-primary group-hover:text-primary-foreground transition-colors">
+            <span className="text-sm font-bold text-primary group-hover:text-primary-foreground">{ep.episode_no}</span>
           </div>
 
           {/* Info */}

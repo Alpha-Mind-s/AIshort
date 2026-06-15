@@ -14,6 +14,9 @@ import type { Episode, EpisodePlayInfo } from "@/lib/api/drama";
 import { getSubscriptionStatus, type Subscription } from "@/lib/api/subscriptions";
 import { formatDuration } from "@/lib/utils/format";
 
+/** Backend business error code for "subscription required" */
+const ERR_SUBSCRIPTION_REQUIRED = 40003;
+
 interface Props {
   episodeId: number;
   dramaId: number;
@@ -39,51 +42,67 @@ export function WatchPageClient({
   const router = useRouter();
   const [playInfo, setPlayInfo] = useState<EpisodePlayInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentRequired, setPaymentRequired] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null | undefined>(undefined);
-  const [checkingSub, setCheckingSub] = useState(true);
 
+  const currentEpiNo = episodeNo ?? 1;
+  const isFirstEpisode = currentEpiNo <= 1;
+
+  // Fetch play URL.
+  // Episode 1 is free — if backend rejects it, fall back to direct video_url
+  // from the episodes list (RequireSubscription middleware currently gates all).
   useEffect(() => {
     getEpisodePlay(episodeId)
       .then(setPlayInfo)
-      .catch((err) => setError(err instanceof Error ? err.message : t("failed_to_load")));
-  }, [episodeId]);
+      .catch((err: unknown) => {
+        // Duck-type: instanceof ApiError fails across webpack module boundaries
+        if (
+          err &&
+          typeof err === "object" &&
+          "code" in err &&
+          (err as { code: number }).code === ERR_SUBSCRIPTION_REQUIRED
+        ) {
+          if (isFirstEpisode) {
+            const ep = episodes.find((e) => e.id === episodeId);
+            if (ep?.video_url) {
+              setPlayInfo({
+                episode: ep,
+                play_url: ep.video_url,
+                expires_at: "",
+                qualities: [],
+              });
+              return;
+            }
+          }
+          setPaymentRequired(true);
+        } else {
+          setError(err instanceof Error ? err.message : t("failed_to_load"));
+        }
+      });
 
-  // Check subscription for episode 2+ gating
-  useEffect(() => {
-    const epNo = episodeNo ?? playInfo?.episode?.episode_no ?? 1;
-    if (epNo <= 1) {
-      setCheckingSub(false);
-      return;
+    // Fetch subscription for episode 2+ gating
+    if (!isFirstEpisode) {
+      getSubscriptionStatus()
+        .then((sub) => setSubscription(sub))
+        .catch(() => setSubscription(null));
     }
-    getSubscriptionStatus()
-      .then((sub) => setSubscription(sub))
-      .catch(() => setSubscription(null))
-      .finally(() => setCheckingSub(false));
-  }, [episodeNo, playInfo]);
+  }, [episodeId, t, isFirstEpisode, episodes]);
+
+  // ── Render ──────────────────────────────────────────────────────────
 
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 max-w-md px-6">
           <p className="text-red-400 text-lg">{t("failed_to_load")}</p>
-          <p className="text-zinc-400 text-sm">{error}</p>
+          <p className="text-zinc-400 text-sm break-all">{error}</p>
         </div>
       </div>
     );
   }
 
-  if (checkingSub || !playInfo) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const currentEpiNo = episodeNo ?? playInfo.episode.episode_no ?? 1;
-  const needsSubscription = currentEpiNo > 1 && !subscription;
-
-  if (needsSubscription) {
+  // Paywall: either play API said 40003, or no subscription for episode 2+
+  if (paymentRequired || (!isFirstEpisode && subscription === null)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-6 max-w-md px-6">
@@ -101,6 +120,15 @@ export function WatchPageClient({
             {t("view_plans")}
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // Loading
+  if (!playInfo) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }

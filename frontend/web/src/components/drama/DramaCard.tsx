@@ -45,7 +45,7 @@ export function DramaCard({ drama }: DramaCardProps) {
         </div>
 
         {/* Episode count badge — glass */}
-        <span className="absolute bottom-2 right-2 glass rounded-full px-2.5 py-1 text-[11px] font-medium text-white/90">
+        <span className="absolute bottom-2 right-2 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white bg-black/60 backdrop-blur-sm shadow-md shadow-black/30">
           {t("ep_abbr", { count: drama.total_episodes })}
         </span>
 
